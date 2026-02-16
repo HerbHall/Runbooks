@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { Runbook } from "../types";
-import { loadRunbooks, saveRunbooks } from "../storage";
+import { loadRunbooks, saveRunbooks, getMissingDefaults } from "../storage";
 
 interface RunbookContextValue {
   runbooks: Runbook[];
@@ -8,6 +8,7 @@ interface RunbookContextValue {
   updateRunbook: (id: string, updates: Partial<Omit<Runbook, "id" | "createdAt">>) => void;
   deleteRunbook: (id: string) => void;
   replaceAll: (runbooks: Runbook[]) => void;
+  restoreDefaults: () => number;
 }
 
 const RunbookContext = createContext<RunbookContextValue | null>(null);
@@ -59,8 +60,20 @@ export function RunbookProvider({ children }: { children: ReactNode }) {
     setRunbooks(imported);
   }, []);
 
+  const restoreDefaults = useCallback((): number => {
+    const missing = getMissingDefaults(runbooks);
+    if (missing.length > 0) {
+      setRunbooks((prev) => {
+        const next = [...missing, ...prev];
+        saveRunbooks(next);
+        return next;
+      });
+    }
+    return missing.length;
+  }, [runbooks]);
+
   return (
-    <RunbookContext.Provider value={{ runbooks, addRunbook, updateRunbook, deleteRunbook, replaceAll }}>
+    <RunbookContext.Provider value={{ runbooks, addRunbook, updateRunbook, deleteRunbook, replaceAll, restoreDefaults }}>
       {children}
     </RunbookContext.Provider>
   );

@@ -36,7 +36,7 @@ export function RunbookCard({ runbook, category, collapsed = false, onToggleColl
   return (
     <>
       <Card variant="outlined">
-        <CardContent sx={{ p: compact ? 1 : 1.5, "&:last-child": { pb: compact ? 1 : 1.5 } }}>
+        <CardContent sx={{ p: compact ? 0.75 : 1, "&:last-child": { pb: compact ? 0.75 : 1 } }}>
           <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: collapsed ? 0 : 0.5 }}>
             {onToggleCollapse && (
               <IconButton size="small" onClick={onToggleCollapse} title={collapsed ? "Expand" : "Collapse"}>
