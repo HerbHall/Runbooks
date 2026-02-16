@@ -1,4 +1,3 @@
-import React from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import {
   Box,
@@ -6,7 +5,6 @@ import {
   Stack,
   Button,
 } from "@mui/material";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AddIcon from "@mui/icons-material/Add";
 import { RunbookList } from "./components/RunbookList";
 

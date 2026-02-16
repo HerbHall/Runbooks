@@ -12,7 +12,8 @@
 - **Repo:** https://github.com/HerbHall/Runbooks
 - **License:** MIT
 - **Owner:** Herb Hall (HerbHall)
-- **Status:** Scaffold complete, pre-`npm install`
+- **Status:** Scaffold verified, builds clean
+- **Workspace:** `D:\DevSpace\runbooks.code-workspace` (DevSpace root, per convention)
 
 ## Architecture
 
@@ -27,7 +28,8 @@ Runbooks/
 ├── ui/                    # React + TypeScript + Material UI frontend
 │   ├── package.json
 │   ├── tsconfig.json
-│   ├── public/index.html
+│   ├── vite.config.ts     # Vite build config (base: ./, outDir: build)
+│   ├── index.html          # Vite entry HTML (root of ui/, not public/)
 │   └── src/
 │       ├── index.tsx      # Entry point with DockerMuiThemeProvider
 │       ├── App.tsx        # Main layout, initializes ddClient
@@ -41,7 +43,6 @@ Runbooks/
 │       ├── ADR-002-license-and-monetization.md
 │       ├── ADR-003-architecture-frontend-only.md
 │       └── ADR-004-scaffold-strategy.md
-├── runbooks.code-workspace # VS Code workspace (standalone project)
 └── CLAUDE.md              # This file
 ```
 
