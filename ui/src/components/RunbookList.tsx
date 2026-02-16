@@ -19,6 +19,8 @@ import SortIcon from "@mui/icons-material/Sort";
 import FolderIcon from "@mui/icons-material/Folder";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import { useRunbooks } from "../context/RunbookContext";
 import { loadPreference, savePreference } from "../storage";
 import type { SortOption, Runbook } from "../types";
@@ -52,6 +54,7 @@ export function RunbookList() {
     () => loadPreference<boolean>("groupByTag", false),
   );
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -149,6 +152,18 @@ export function RunbookList() {
     });
   };
 
+  const toggleCardCollapse = (id: string) => {
+    setCollapsedCards((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const expandAllCards = () => setCollapsedCards(new Set());
+  const collapseAllCards = () => setCollapsedCards(new Set(sorted.map((r) => r.id)));
+
   const totalInGroup = (g: PrimaryGroup) =>
     g.direct.length + g.subgroups.reduce((sum, s) => sum + s.runbooks.length, 0);
 
@@ -203,6 +218,16 @@ export function RunbookList() {
           <MenuItem value="modified-desc">Recently Modified</MenuItem>
           <MenuItem value="modified-asc">Least Recently Modified</MenuItem>
         </Select>
+        <Tooltip title="Expand all cards" placement="bottom">
+          <IconButton size="small" onClick={expandAllCards}>
+            <UnfoldMoreIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Collapse all cards" placement="bottom">
+          <IconButton size="small" onClick={collapseAllCards}>
+            <UnfoldLessIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Group by tags. First tag = group, second tag = sub-group." placement="bottom">
           <Button
             size="small"
@@ -261,7 +286,7 @@ export function RunbookList() {
                     {group.direct.length > 0 && (
                       <Box sx={{ ...gridSx, mb: group.subgroups.length > 0 ? 1.5 : 0 }}>
                         {group.direct.map((runbook) => (
-                          <RunbookCard key={runbook.id} runbook={runbook} />
+                          <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} />
                         ))}
                       </Box>
                     )}
@@ -292,7 +317,7 @@ export function RunbookList() {
                           <Collapse in={!collapsed.has(subKey)}>
                             <Box sx={{ ...gridSx, pl: 2 }}>
                               {sub.runbooks.map((runbook) => (
-                                <RunbookCard key={runbook.id} runbook={runbook} />
+                                <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} />
                               ))}
                             </Box>
                           </Collapse>
@@ -308,7 +333,7 @@ export function RunbookList() {
       ) : (
         <Box sx={{ flex: 1, overflow: "auto", ...gridSx }}>
           {sorted.map((runbook) => (
-            <RunbookCard key={runbook.id} runbook={runbook} />
+            <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} />
           ))}
         </Box>
       )}
