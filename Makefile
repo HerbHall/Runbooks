@@ -31,7 +31,7 @@ validate-extension: ## Validate the extension
 	docker extension validate $(IMAGE):$(TAG)
 
 dev-ui: ## Start UI hot reload for development
-	cd ui && npm start
+	cd ui && npm run dev
 
 dev-attach: ## Attach local UI source to running extension
 	docker extension dev ui-source $(IMAGE):$(TAG) http://localhost:3000
