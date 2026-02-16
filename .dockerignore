@@ -1,7 +1,4 @@
-# Include any files or directories that you don't want to be copied to your
-# container here (e.g., local build artifacts, temporary files, etc.).
-#
-# For more help, visit the .dockerignore file reference guide at
+# Docker build context exclusions
 # https://docs.docker.com/engine/reference/builder/#dockerignore-file
 
 **/.DS_Store
@@ -32,14 +29,9 @@
 **/values.dev.yaml
 LICENSE
 README.md
-ui/node_modules/
-ui/build/
-.git/
+*.md
+*.code-workspace
 .claude/
 .coordination/
-.vscode/
 docs/
-*.md
-!ui/README.md
-LICENSE
-*.code-workspace
+ui/build/
