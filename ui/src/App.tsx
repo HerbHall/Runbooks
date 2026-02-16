@@ -4,9 +4,12 @@ import { Box, Typography, Stack, Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { RunbookList } from "./components/RunbookList";
 import { RunbookFormDialog } from "./components/RunbookFormDialog";
+import { CategoryManagementDialog } from "./components/CategoryManagementDialog";
 import { useRunbooks } from "./context/RunbookContext";
+import { useCategories } from "./context/CategoryContext";
 import { exportRunbooks, importRunbooks } from "./storage";
 
 const ddClient = createDockerDesktopClient();
@@ -17,11 +20,13 @@ export function useDockerDesktopClient() {
 
 export default function App() {
   const { runbooks, replaceAll } = useRunbooks();
+  const { categories, replaceAllCategories } = useCategories();
   const [formOpen, setFormOpen] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
-    exportRunbooks(runbooks);
+    exportRunbooks(runbooks, categories);
     ddClient.desktopUI.toast.success("Runbooks exported");
   };
 
@@ -33,9 +38,12 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const imported = await importRunbooks(file);
-      replaceAll(imported);
-      ddClient.desktopUI.toast.success(`Imported ${imported.length} runbooks`);
+      const result = await importRunbooks(file);
+      replaceAll(result.runbooks);
+      if (result.categories) {
+        replaceAllCategories(result.categories);
+      }
+      ddClient.desktopUI.toast.success(`Imported ${result.runbooks.length} runbooks`);
     } catch (err) {
       ddClient.desktopUI.toast.error(err instanceof Error ? err.message : "Import failed");
     }
@@ -52,6 +60,9 @@ export default function App() {
       >
         <Typography variant="h3">Runbooks</Typography>
         <Stack direction="row" spacing={1}>
+          <Button size="small" startIcon={<SettingsIcon />} onClick={() => setCategoryDialogOpen(true)}>
+            Categories
+          </Button>
           {runbooks.length > 0 && (
             <Button size="small" startIcon={<DownloadIcon />} onClick={handleExport}>
               Export
@@ -74,6 +85,7 @@ export default function App() {
       <RunbookList />
 
       <RunbookFormDialog open={formOpen} onClose={() => setFormOpen(false)} />
+      <CategoryManagementDialog open={categoryDialogOpen} onClose={() => setCategoryDialogOpen(false)} />
 
       <input
         ref={fileInputRef}

@@ -10,7 +10,6 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  Button,
   Collapse,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
@@ -25,9 +24,11 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import DensitySmallIcon from "@mui/icons-material/DensitySmall";
 import { useRunbooks } from "../context/RunbookContext";
+import { useCategories } from "../context/CategoryContext";
 import { loadPreference, savePreference } from "../storage";
-import type { SortOption, LayoutMode, Runbook } from "../types";
+import type { SortOption, LayoutMode, GroupMode, Runbook, Category } from "../types";
 import { RunbookCard } from "./RunbookCard";
+import { CategoryBadge } from "./CategoryBadge";
 
 const getLayoutSx = (mode: LayoutMode, compact: boolean) => {
   const gap = compact ? 1 : 1.5;
@@ -49,18 +50,22 @@ interface SubGroup {
 
 interface PrimaryGroup {
   tag: string;
+  color?: string;
+  icon?: string;
+  category?: Category;
   direct: Runbook[];
   subgroups: SubGroup[];
 }
 
 export function RunbookList() {
   const { runbooks } = useRunbooks();
+  const { categories } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>(
     () => loadPreference<SortOption>("sortBy", "name-asc"),
   );
-  const [groupByTag, setGroupByTag] = useState<boolean>(
-    () => loadPreference<boolean>("groupByTag", false),
+  const [groupMode, setGroupMode] = useState<GroupMode>(
+    () => loadPreference<GroupMode>("groupMode", "none"),
   );
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(
     () => loadPreference<LayoutMode>("layoutMode", "grid"),
@@ -70,6 +75,11 @@ export function RunbookList() {
   );
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
+
+  const categoryMap = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  );
 
   const layoutSx = useMemo(() => getLayoutSx(layoutMode, compact), [layoutMode, compact]);
 
@@ -81,9 +91,10 @@ export function RunbookList() {
         r.name.toLowerCase().includes(q) ||
         r.description.toLowerCase().includes(q) ||
         r.tags.some((t) => t.toLowerCase().includes(q)) ||
-        r.commands.some((c) => c.toLowerCase().includes(q)),
+        r.commands.some((c) => c.toLowerCase().includes(q)) ||
+        (r.categoryId && categoryMap.get(r.categoryId)?.name.toLowerCase().includes(q)),
     );
-  }, [runbooks, searchQuery]);
+  }, [runbooks, searchQuery, categoryMap]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -106,8 +117,40 @@ export function RunbookList() {
   }, [filtered, sortBy]);
 
   const groups = useMemo((): PrimaryGroup[] | null => {
-    if (!groupByTag) return null;
+    if (groupMode === "none") return null;
 
+    if (groupMode === "category") {
+      const catGroups = new Map<string, Runbook[]>();
+      const ungrouped: Runbook[] = [];
+
+      for (const r of sorted) {
+        if (r.categoryId && categoryMap.has(r.categoryId)) {
+          if (!catGroups.has(r.categoryId)) catGroups.set(r.categoryId, []);
+          catGroups.get(r.categoryId)!.push(r);
+        } else {
+          ungrouped.push(r);
+        }
+      }
+
+      const sortedCats = [...categories].sort((a, b) => a.order - b.order);
+      const result: PrimaryGroup[] = sortedCats
+        .filter((cat) => catGroups.has(cat.id))
+        .map((cat) => ({
+          tag: cat.name,
+          color: cat.color,
+          icon: cat.icon,
+          category: cat,
+          direct: catGroups.get(cat.id) ?? [],
+          subgroups: [],
+        }));
+
+      if (ungrouped.length > 0) {
+        result.push({ tag: "Uncategorized", direct: ungrouped, subgroups: [] });
+      }
+      return result;
+    }
+
+    // groupMode === "tag"
     const primaryMap = new Map<string, { direct: Runbook[]; subs: Map<string, Runbook[]> }>();
     const ungrouped: Runbook[] = [];
 
@@ -144,7 +187,7 @@ export function RunbookList() {
       result.push({ tag: "Ungrouped", direct: ungrouped, subgroups: [] });
     }
     return result;
-  }, [sorted, groupByTag]);
+  }, [sorted, groupMode, categories, categoryMap]);
 
   const toggleCollapse = (key: string) => {
     setCollapsed((prev) => {
@@ -161,10 +204,14 @@ export function RunbookList() {
     savePreference("sortBy", value);
   };
 
-  const handleGroupToggle = () => {
-    setGroupByTag((prev) => {
-      const next = !prev;
-      savePreference("groupByTag", next);
+  const cycleGroupMode = () => {
+    setGroupMode((prev) => {
+      const modes: GroupMode[] = categories.length > 0
+        ? ["none", "tag", "category"]
+        : ["none", "tag"];
+      const idx = modes.indexOf(prev);
+      const next = modes[(idx + 1) % modes.length];
+      savePreference("groupMode", next);
       return next;
     });
   };
@@ -199,6 +246,19 @@ export function RunbookList() {
 
   const totalInGroup = (g: PrimaryGroup) =>
     g.direct.length + g.subgroups.reduce((sum, s) => sum + s.runbooks.length, 0);
+
+  const groupLabel = groupMode === "none" ? "Group" : groupMode === "tag" ? "By Tag" : "By Category";
+
+  const renderCard = (runbook: Runbook) => (
+    <RunbookCard
+      key={runbook.id}
+      runbook={runbook}
+      category={runbook.categoryId ? categoryMap.get(runbook.categoryId) : undefined}
+      collapsed={collapsedCards.has(runbook.id)}
+      onToggleCollapse={() => toggleCardCollapse(runbook.id)}
+      compact={compact}
+    />
+  );
 
   if (runbooks.length === 0) {
     return (
@@ -271,16 +331,16 @@ export function RunbookList() {
             <UnfoldLessIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Group by tags. First tag = group, second tag = sub-group." placement="bottom">
-          <Button
+        <Tooltip title="Cycle grouping: None / By Tag / By Category" placement="bottom">
+          <Chip
+            icon={<FolderIcon />}
+            label={groupLabel}
             size="small"
-            variant={groupByTag ? "contained" : "outlined"}
-            startIcon={<FolderIcon />}
-            onClick={handleGroupToggle}
-            sx={{ whiteSpace: "nowrap" }}
-          >
-            Group
-          </Button>
+            color={groupMode !== "none" ? "primary" : "default"}
+            variant={groupMode !== "none" ? "filled" : "outlined"}
+            onClick={cycleGroupMode}
+            sx={{ cursor: "pointer" }}
+          />
         </Tooltip>
       </Stack>
 
@@ -303,7 +363,7 @@ export function RunbookList() {
           <Stack spacing={2}>
             {groups.map((group) => (
               <Box key={group.tag}>
-                {/* Primary group header */}
+                {/* Group header */}
                 <Stack
                   direction="row"
                   alignItems="center"
@@ -318,22 +378,22 @@ export function RunbookList() {
                       <ExpandLessIcon fontSize="small" />
                     )}
                   </IconButton>
-                  <Chip label={group.tag} size="small" />
+                  {group.category ? (
+                    <CategoryBadge category={group.category} />
+                  ) : (
+                    <Chip label={group.tag} size="small" />
+                  )}
                   <Typography variant="body2" color="text.secondary">
                     ({totalInGroup(group)})
                   </Typography>
                 </Stack>
                 <Collapse in={!collapsed.has(group.tag)}>
                   <Box sx={{ pl: 2 }}>
-                    {/* Direct runbooks (single-tag, no sub-group) */}
                     {group.direct.length > 0 && (
                       <Box sx={{ ...layoutSx, mb: group.subgroups.length > 0 ? 1.5 : 0 }}>
-                        {group.direct.map((runbook) => (
-                          <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} compact={compact} />
-                        ))}
+                        {group.direct.map(renderCard)}
                       </Box>
                     )}
-                    {/* Sub-groups (second tag) */}
                     {group.subgroups.map((sub) => {
                       const subKey = `${group.tag}/${sub.tag}`;
                       return (
@@ -359,9 +419,7 @@ export function RunbookList() {
                           </Stack>
                           <Collapse in={!collapsed.has(subKey)}>
                             <Box sx={{ ...layoutSx, pl: 2 }}>
-                              {sub.runbooks.map((runbook) => (
-                                <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} compact={compact} />
-                              ))}
+                              {sub.runbooks.map(renderCard)}
                             </Box>
                           </Collapse>
                         </Box>
@@ -375,9 +433,7 @@ export function RunbookList() {
         </Box>
       ) : (
         <Box sx={{ flex: 1, overflow: "auto", ...layoutSx }}>
-          {sorted.map((runbook) => (
-            <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} compact={compact} />
-          ))}
+          {sorted.map(renderCard)}
         </Box>
       )}
     </Box>
