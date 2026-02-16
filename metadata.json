@@ -1,0 +1,12 @@
+{
+  "icon": "docker.svg",
+  "ui": {
+    "dashboard-tab": {
+      "title": "Runbooks",
+      "root": "/ui",
+      "src": "index.html"
+    }
+  },
+  "vm": {},
+  "host": {}
+}

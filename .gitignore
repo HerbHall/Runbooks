@@ -1,0 +1,24 @@
+# Dependencies
+ui/node_modules/
+
+# Build output
+ui/build/
+
+# IDE
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Session state (local only)
+.coordination/
+
+# npm
+npm-debug.log*
