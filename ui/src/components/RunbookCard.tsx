@@ -23,9 +23,10 @@ interface RunbookCardProps {
   runbook: Runbook;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  compact?: boolean;
 }
 
-export function RunbookCard({ runbook, collapsed = false, onToggleCollapse }: RunbookCardProps) {
+export function RunbookCard({ runbook, collapsed = false, onToggleCollapse, compact = false }: RunbookCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [execOpen, setExecOpen] = useState(false);
@@ -33,7 +34,7 @@ export function RunbookCard({ runbook, collapsed = false, onToggleCollapse }: Ru
   return (
     <>
       <Card variant="outlined">
-        <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+        <CardContent sx={{ p: compact ? 1 : 1.5, "&:last-child": { pb: compact ? 1 : 1.5 } }}>
           <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: collapsed ? 0 : 0.5 }}>
             {onToggleCollapse && (
               <IconButton size="small" onClick={onToggleCollapse} title={collapsed ? "Expand" : "Collapse"}>
@@ -44,7 +45,7 @@ export function RunbookCard({ runbook, collapsed = false, onToggleCollapse }: Ru
                 )}
               </IconButton>
             )}
-            <Typography variant="subtitle1" component="div" sx={{ flexShrink: 0, fontWeight: 600, lineHeight: 1.3 }}>
+            <Typography variant={compact ? "body1" : "subtitle1"} component="div" sx={{ flexShrink: 0, fontWeight: 600, lineHeight: 1.3 }}>
               {runbook.name}
             </Typography>
             {runbook.tags.map((tag) => (
@@ -72,11 +73,11 @@ export function RunbookCard({ runbook, collapsed = false, onToggleCollapse }: Ru
                 component="pre"
                 sx={{
                   bgcolor: "action.hover",
-                  p: 1,
+                  p: compact ? 0.75 : 1,
                   borderRadius: 1,
-                  fontSize: "0.8rem",
+                  fontSize: compact ? "0.75rem" : "0.8rem",
                   lineHeight: 1.4,
-                  maxHeight: "calc(0.8rem * 1.4 * 3 + 16px)",
+                  maxHeight: compact ? "calc(0.75rem * 1.4 * 2 + 12px)" : "calc(0.8rem * 1.4 * 3 + 16px)",
                   overflowY: "auto",
                   overflowX: "auto",
                   m: 0,

@@ -21,16 +21,25 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import GridViewIcon from "@mui/icons-material/GridView";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import DensitySmallIcon from "@mui/icons-material/DensitySmall";
 import { useRunbooks } from "../context/RunbookContext";
 import { loadPreference, savePreference } from "../storage";
-import type { SortOption, Runbook } from "../types";
+import type { SortOption, LayoutMode, Runbook } from "../types";
 import { RunbookCard } from "./RunbookCard";
 
-const gridSx = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-  gap: 1.5,
-  alignContent: "start",
+const getLayoutSx = (mode: LayoutMode, compact: boolean) => {
+  const gap = compact ? 1 : 1.5;
+  if (mode === "list") {
+    return { display: "flex", flexDirection: "column" as const, gap, alignContent: "start" };
+  }
+  return {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    gap,
+    alignContent: "start",
+  };
 };
 
 interface SubGroup {
@@ -53,8 +62,16 @@ export function RunbookList() {
   const [groupByTag, setGroupByTag] = useState<boolean>(
     () => loadPreference<boolean>("groupByTag", false),
   );
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(
+    () => loadPreference<LayoutMode>("layoutMode", "grid"),
+  );
+  const [compact, setCompact] = useState<boolean>(
+    () => loadPreference<boolean>("compact", false),
+  );
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
+
+  const layoutSx = useMemo(() => getLayoutSx(layoutMode, compact), [layoutMode, compact]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -152,6 +169,22 @@ export function RunbookList() {
     });
   };
 
+  const handleLayoutToggle = () => {
+    setLayoutMode((prev) => {
+      const next = prev === "grid" ? "list" : "grid";
+      savePreference("layoutMode", next);
+      return next;
+    });
+  };
+
+  const handleCompactToggle = () => {
+    setCompact((prev) => {
+      const next = !prev;
+      savePreference("compact", next);
+      return next;
+    });
+  };
+
   const toggleCardCollapse = (id: string) => {
     setCollapsedCards((prev) => {
       const next = new Set(prev);
@@ -218,6 +251,16 @@ export function RunbookList() {
           <MenuItem value="modified-desc">Recently Modified</MenuItem>
           <MenuItem value="modified-asc">Least Recently Modified</MenuItem>
         </Select>
+        <Tooltip title={layoutMode === "grid" ? "Switch to list view" : "Switch to grid view"} placement="bottom">
+          <IconButton size="small" onClick={handleLayoutToggle}>
+            {layoutMode === "grid" ? <ViewListIcon fontSize="small" /> : <GridViewIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={compact ? "Normal density" : "Compact density"} placement="bottom">
+          <IconButton size="small" onClick={handleCompactToggle} color={compact ? "primary" : "default"}>
+            <DensitySmallIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Expand all cards" placement="bottom">
           <IconButton size="small" onClick={expandAllCards}>
             <UnfoldMoreIcon fontSize="small" />
@@ -284,9 +327,9 @@ export function RunbookList() {
                   <Box sx={{ pl: 2 }}>
                     {/* Direct runbooks (single-tag, no sub-group) */}
                     {group.direct.length > 0 && (
-                      <Box sx={{ ...gridSx, mb: group.subgroups.length > 0 ? 1.5 : 0 }}>
+                      <Box sx={{ ...layoutSx, mb: group.subgroups.length > 0 ? 1.5 : 0 }}>
                         {group.direct.map((runbook) => (
-                          <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} />
+                          <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} compact={compact} />
                         ))}
                       </Box>
                     )}
@@ -315,9 +358,9 @@ export function RunbookList() {
                             </Typography>
                           </Stack>
                           <Collapse in={!collapsed.has(subKey)}>
-                            <Box sx={{ ...gridSx, pl: 2 }}>
+                            <Box sx={{ ...layoutSx, pl: 2 }}>
                               {sub.runbooks.map((runbook) => (
-                                <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} />
+                                <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} compact={compact} />
                               ))}
                             </Box>
                           </Collapse>
@@ -331,9 +374,9 @@ export function RunbookList() {
           </Stack>
         </Box>
       ) : (
-        <Box sx={{ flex: 1, overflow: "auto", ...gridSx }}>
+        <Box sx={{ flex: 1, overflow: "auto", ...layoutSx }}>
           {sorted.map((runbook) => (
-            <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} />
+            <RunbookCard key={runbook.id} runbook={runbook} collapsed={collapsedCards.has(runbook.id)} onToggleCollapse={() => toggleCardCollapse(runbook.id)} compact={compact} />
           ))}
         </Box>
       )}
