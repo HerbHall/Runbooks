@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch",
+      "Glob",
+      "Grep",
+      "Task",
+      "Skill",
+      "mcp__*",
+      "mcp__MCP_DOCKER__read_file",
+      "mcp__memory__search_nodes",
+      "mcp__memory__create_entities",
+      "mcp__memory__create_relations",
+      "mcp__MCP_DOCKER__fetch"
+    ]
+  },
+  "enableAllProjectMcpServers": true
+}

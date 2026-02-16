@@ -14,19 +14,21 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import type { Runbook } from "../types";
+import type { Runbook, Category } from "../types";
 import { RunbookFormDialog } from "./RunbookFormDialog";
 import { RunbookDeleteDialog } from "./RunbookDeleteDialog";
 import { RunbookExecutionDialog } from "./RunbookExecutionDialog";
+import { CategoryBadge } from "./CategoryBadge";
 
 interface RunbookCardProps {
   runbook: Runbook;
+  category?: Category;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   compact?: boolean;
 }
 
-export function RunbookCard({ runbook, collapsed = false, onToggleCollapse, compact = false }: RunbookCardProps) {
+export function RunbookCard({ runbook, category, collapsed = false, onToggleCollapse, compact = false }: RunbookCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [execOpen, setExecOpen] = useState(false);
@@ -48,6 +50,7 @@ export function RunbookCard({ runbook, collapsed = false, onToggleCollapse, comp
             <Typography variant={compact ? "body1" : "subtitle1"} component="div" sx={{ flexShrink: 0, fontWeight: 600, lineHeight: 1.3 }}>
               {runbook.name}
             </Typography>
+            {category && <CategoryBadge category={category} />}
             {runbook.tags.map((tag) => (
               <Chip key={tag} label={tag} size="small" />
             ))}

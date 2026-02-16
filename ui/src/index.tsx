@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { DockerMuiThemeProvider } from "@docker/docker-mui-theme";
 import CssBaseline from "@mui/material/CssBaseline";
 import { RunbookProvider } from "./context/RunbookContext";
+import { CategoryProvider } from "./context/CategoryContext";
 import App from "./App";
 
 const root = ReactDOM.createRoot(
@@ -14,7 +15,9 @@ root.render(
     <DockerMuiThemeProvider>
       <CssBaseline />
       <RunbookProvider>
-        <App />
+        <CategoryProvider>
+          <App />
+        </CategoryProvider>
       </RunbookProvider>
     </DockerMuiThemeProvider>
   </React.StrictMode>,

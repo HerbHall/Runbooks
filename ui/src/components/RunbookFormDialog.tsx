@@ -11,9 +11,16 @@ import {
   Chip,
   Alert,
   Typography,
+  Select,
+  MenuItem,
+  Box,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import type { Runbook } from "../types";
 import { useRunbooks } from "../context/RunbookContext";
+import { useCategories } from "../context/CategoryContext";
+import { ICON_LABELS } from "../category-defaults";
 import { CommandEditor } from "./CommandEditor";
 import {
   DOCKER_COMMANDS,
@@ -85,12 +92,14 @@ interface RunbookFormDialogProps {
 
 export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogProps) {
   const { runbooks, addRunbook, updateRunbook } = useRunbooks();
+  const { categories } = useCategories();
   const isEdit = Boolean(runbook);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [commands, setCommands] = useState("");
   const [tagList, setTagList] = useState<string[]>([]);
+  const [categoryId, setCategoryId] = useState("");
 
   const commandWarnings = useMemo(() => validateCommands(commands), [commands]);
 
@@ -110,11 +119,13 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
       setDescription(runbook.description);
       setCommands(runbook.commands.join("\n"));
       setTagList([...runbook.tags]);
+      setCategoryId(runbook.categoryId ?? "");
     } else if (open) {
       setName("");
       setDescription("");
       setCommands("");
       setTagList([]);
+      setCategoryId("");
     }
   }, [open, runbook]);
 
@@ -131,6 +142,7 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
       description: description.trim(),
       commands: commandList,
       tags: tagList,
+      categoryId: categoryId || undefined,
     };
 
     if (isEdit && runbook) {
@@ -160,6 +172,28 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
           />
+          {categories.length > 0 && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                label="Category"
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {[...categories].sort((a, b) => a.order - b.order).map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: cat.color }} />
+                      {ICON_LABELS[cat.icon] ?? ""} {cat.name}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
           <div>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
               Commands (one per line) *

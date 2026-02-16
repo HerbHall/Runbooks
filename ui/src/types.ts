@@ -4,6 +4,7 @@ export interface Runbook {
   description: string;
   commands: string[];
   tags: string[];
+  categoryId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,3 +22,14 @@ export type ExecutionStatus = "idle" | "running" | "completed" | "failed";
 export type SortOption = "name-asc" | "name-desc" | "created-desc" | "created-asc" | "modified-desc" | "modified-asc";
 
 export type LayoutMode = "grid" | "list";
+
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+  parentId: string | null;
+  order: number;
+}
+
+export type GroupMode = "none" | "tag" | "category";

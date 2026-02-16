@@ -1,6 +1,8 @@
-import type { Runbook } from "./types";
+import type { Runbook, Category } from "./types";
+import { DEFAULT_CATEGORIES } from "./category-defaults";
 
 const STORAGE_KEY = "runbooks-data";
+const CATEGORIES_KEY = "runbooks-categories";
 const PREFS_KEY = "runbooks-prefs";
 
 const DEFAULT_RUNBOOKS: Runbook[] = [
@@ -79,8 +81,23 @@ export function saveRunbooks(runbooks: Runbook[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(runbooks));
 }
 
-export function exportRunbooks(runbooks: Runbook[]): void {
-  const json = JSON.stringify(runbooks, null, 2);
+export function loadCategories(): Category[] {
+  const raw = localStorage.getItem(CATEGORIES_KEY);
+  if (!raw) return DEFAULT_CATEGORIES;
+  try {
+    return JSON.parse(raw) as Category[];
+  } catch {
+    return DEFAULT_CATEGORIES;
+  }
+}
+
+export function saveCategories(categories: Category[]): void {
+  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+}
+
+export function exportRunbooks(runbooks: Runbook[], categories?: Category[]): void {
+  const payload = { runbooks, categories: categories ?? [] };
+  const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -109,17 +126,28 @@ export function savePreference(key: string, value: unknown): void {
   }
 }
 
-export function importRunbooks(file: File): Promise<Runbook[]> {
+export interface ImportResult {
+  runbooks: Runbook[];
+  categories?: Category[];
+}
+
+export function importRunbooks(file: File): Promise<ImportResult> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        if (!Array.isArray(data)) {
-          reject(new Error("Invalid format: expected an array"));
-          return;
+        // Support old format (plain array) and new format ({ runbooks, categories })
+        if (Array.isArray(data)) {
+          resolve({ runbooks: data as Runbook[] });
+        } else if (data && Array.isArray(data.runbooks)) {
+          resolve({
+            runbooks: data.runbooks as Runbook[],
+            categories: Array.isArray(data.categories) ? data.categories as Category[] : undefined,
+          });
+        } else {
+          reject(new Error("Invalid format: expected runbooks array or { runbooks, categories }"));
         }
-        resolve(data as Runbook[]);
       } catch {
         reject(new Error("Invalid JSON file"));
       }
