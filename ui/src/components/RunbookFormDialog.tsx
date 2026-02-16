@@ -9,11 +9,31 @@ import {
   Stack,
   Autocomplete,
   Chip,
+  Alert,
 } from "@mui/material";
 import type { Runbook } from "../types";
 import { useRunbooks } from "../context/RunbookContext";
 
 const COMMON_TAGS = ["info", "cleanup", "dev", "production", "maintenance", "monitoring", "caution"];
+
+function validateCommands(raw: string): string[] {
+  const warnings: string[] = [];
+  const lines = raw.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (/^docker\s+/i.test(line)) {
+      warnings.push(`Line ${i + 1}: Remove leading "docker" — the extension adds it automatically.`);
+    }
+    if (/[;&|]/.test(line)) {
+      warnings.push(`Line ${i + 1}: Shell operators (;, &, |) may not work. Use separate lines instead.`);
+    }
+    if (/\$\{?\w/.test(line)) {
+      warnings.push(`Line ${i + 1}: Variable substitution ($VAR) is not supported.`);
+    }
+  }
+  return warnings;
+}
 
 interface RunbookFormDialogProps {
   open: boolean;
@@ -29,6 +49,8 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
   const [description, setDescription] = useState("");
   const [commands, setCommands] = useState("");
   const [tagList, setTagList] = useState<string[]>([]);
+
+  const commandWarnings = useMemo(() => validateCommands(commands), [commands]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set(COMMON_TAGS);
@@ -107,6 +129,13 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
             inputProps={{ style: { fontFamily: "monospace" } }}
             helperText="Each line is a Docker command, e.g. 'container prune -f'"
           />
+          {commandWarnings.length > 0 && (
+            <Alert severity="warning" sx={{ py: 0, "& .MuiAlert-message": { fontSize: "0.8rem" } }}>
+              {commandWarnings.map((w) => (
+                <div key={w}>{w}</div>
+              ))}
+            </Alert>
+          )}
           <Autocomplete
             multiple
             freeSolo
