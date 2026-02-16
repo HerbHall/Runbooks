@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,9 +7,13 @@ import {
   Button,
   TextField,
   Stack,
+  Autocomplete,
+  Chip,
 } from "@mui/material";
 import type { Runbook } from "../types";
 import { useRunbooks } from "../context/RunbookContext";
+
+const COMMON_TAGS = ["info", "cleanup", "dev", "production", "maintenance", "monitoring", "caution"];
 
 interface RunbookFormDialogProps {
   open: boolean;
@@ -18,25 +22,35 @@ interface RunbookFormDialogProps {
 }
 
 export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogProps) {
-  const { addRunbook, updateRunbook } = useRunbooks();
+  const { runbooks, addRunbook, updateRunbook } = useRunbooks();
   const isEdit = Boolean(runbook);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [commands, setCommands] = useState("");
-  const [tags, setTags] = useState("");
+  const [tagList, setTagList] = useState<string[]>([]);
+
+  const allTags = useMemo(() => {
+    const tagSet = new Set(COMMON_TAGS);
+    for (const r of runbooks) {
+      for (const t of r.tags) {
+        tagSet.add(t);
+      }
+    }
+    return [...tagSet].sort();
+  }, [runbooks]);
 
   useEffect(() => {
     if (open && runbook) {
       setName(runbook.name);
       setDescription(runbook.description);
       setCommands(runbook.commands.join("\n"));
-      setTags(runbook.tags.join(", "));
+      setTagList([...runbook.tags]);
     } else if (open) {
       setName("");
       setDescription("");
       setCommands("");
-      setTags("");
+      setTagList([]);
     }
   }, [open, runbook]);
 
@@ -45,27 +59,20 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
       .split("\n")
       .map((c) => c.trim())
       .filter(Boolean);
-    const tagList = tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
 
     if (!name.trim() || commandList.length === 0) return;
 
+    const data = {
+      name: name.trim(),
+      description: description.trim(),
+      commands: commandList,
+      tags: tagList,
+    };
+
     if (isEdit && runbook) {
-      updateRunbook(runbook.id, {
-        name: name.trim(),
-        description: description.trim(),
-        commands: commandList,
-        tags: tagList,
-      });
+      updateRunbook(runbook.id, data);
     } else {
-      addRunbook({
-        name: name.trim(),
-        description: description.trim(),
-        commands: commandList,
-        tags: tagList,
-      });
+      addRunbook(data);
     }
     onClose();
   };
@@ -100,12 +107,26 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
             inputProps={{ style: { fontFamily: "monospace" } }}
             helperText="Each line is a Docker command, e.g. 'container prune -f'"
           />
-          <TextField
-            label="Tags (comma-separated)"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            fullWidth
-            placeholder="cleanup, dev, production"
+          <Autocomplete
+            multiple
+            freeSolo
+            options={allTags}
+            value={tagList}
+            onChange={(_e, newValue) => setTagList(newValue)}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => {
+                const { key, ...rest } = getTagProps({ index });
+                return <Chip key={key} label={option} size="small" {...rest} />;
+              })
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Tags"
+                placeholder={tagList.length === 0 ? "Type to search or add tags..." : ""}
+                helperText="First tag = group, second tag = sub-group when grouping is enabled"
+              />
+            )}
           />
         </Stack>
       </DialogContent>
