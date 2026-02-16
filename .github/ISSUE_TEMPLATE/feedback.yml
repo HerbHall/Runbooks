@@ -1,0 +1,11 @@
+name: Feedback
+description: General feedback, questions, or suggestions
+labels: ["feedback"]
+body:
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Your feedback
+      description: Share your thoughts, questions, or suggestions.
+    validations:
+      required: true

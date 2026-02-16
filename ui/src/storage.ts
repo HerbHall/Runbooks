@@ -1,6 +1,7 @@
 import type { Runbook } from "./types";
 
 const STORAGE_KEY = "runbooks-data";
+const PREFS_KEY = "runbooks-prefs";
 
 const DEFAULT_RUNBOOKS: Runbook[] = [
   {
@@ -87,6 +88,25 @@ export function exportRunbooks(runbooks: Runbook[]): void {
   a.download = `runbooks-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function loadPreference<T>(key: string, fallback: T): T {
+  try {
+    const prefs = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}");
+    return key in prefs ? prefs[key] : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function savePreference(key: string, value: unknown): void {
+  try {
+    const prefs = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}");
+    prefs[key] = value;
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    // silently ignore
+  }
 }
 
 export function importRunbooks(file: File): Promise<Runbook[]> {
