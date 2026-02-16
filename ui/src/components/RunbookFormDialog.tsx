@@ -10,9 +10,17 @@ import {
   Autocomplete,
   Chip,
   Alert,
+  Typography,
 } from "@mui/material";
 import type { Runbook } from "../types";
 import { useRunbooks } from "../context/RunbookContext";
+import { CommandEditor } from "./CommandEditor";
+import {
+  DOCKER_COMMANDS,
+  ALL_COMMANDS,
+  MANAGEMENT_COMMANDS,
+  findClosest,
+} from "../docker-commands";
 
 const COMMON_TAGS = ["info", "cleanup", "dev", "production", "maintenance", "monitoring", "caution"];
 
@@ -21,15 +29,49 @@ function validateCommands(raw: string): string[] {
   const lines = raw.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line) continue;
+    if (!line || line.startsWith("#")) continue;
+
+    // Phase 1: Basic pattern checks
     if (/^docker\s+/i.test(line)) {
       warnings.push(`Line ${i + 1}: Remove leading "docker" — the extension adds it automatically.`);
+      continue;
     }
     if (/[;&|]/.test(line)) {
       warnings.push(`Line ${i + 1}: Shell operators (;, &, |) may not work. Use separate lines instead.`);
     }
     if (/\$\{?\w/.test(line)) {
       warnings.push(`Line ${i + 1}: Variable substitution ($VAR) is not supported.`);
+    }
+
+    // Phase 2: Command tree validation
+    const tokens = line.split(/\s+/);
+    const cmd = tokens[0].toLowerCase();
+
+    if (!ALL_COMMANDS.has(cmd)) {
+      const suggestion = findClosest(cmd, ALL_COMMANDS);
+      if (suggestion) {
+        warnings.push(`Line ${i + 1}: Unknown command "${tokens[0]}". Did you mean "${suggestion}"?`);
+      } else {
+        warnings.push(`Line ${i + 1}: Unknown command "${tokens[0]}".`);
+      }
+      continue;
+    }
+
+    // Check sub-commands for management commands
+    if (MANAGEMENT_COMMANDS.has(cmd)) {
+      const subs = DOCKER_COMMANDS[cmd].subcommands;
+      if (subs && tokens.length > 1) {
+        const sub = tokens[1].toLowerCase();
+        // Skip if it looks like a flag (e.g., compose --file)
+        if (!sub.startsWith("-") && !(sub in subs)) {
+          const subSuggestion = findClosest(sub, Object.keys(subs));
+          if (subSuggestion) {
+            warnings.push(
+              `Line ${i + 1}: Unknown sub-command "${tokens[1]}" for "${cmd}". Did you mean "${subSuggestion}"?`,
+            );
+          }
+        }
+      }
     }
   }
   return warnings;
@@ -118,17 +160,12 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
           />
-          <TextField
-            label="Commands (one per line)"
-            value={commands}
-            onChange={(e) => setCommands(e.target.value)}
-            multiline
-            minRows={3}
-            required
-            fullWidth
-            inputProps={{ style: { fontFamily: "monospace" } }}
-            helperText="Each line is a Docker command, e.g. 'container prune -f'"
-          />
+          <div>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
+              Commands (one per line) *
+            </Typography>
+            <CommandEditor value={commands} onChange={setCommands} />
+          </div>
           {commandWarnings.length > 0 && (
             <Alert severity="warning" sx={{ py: 0, "& .MuiAlert-message": { fontSize: "0.8rem" } }}>
               {commandWarnings.map((w) => (
