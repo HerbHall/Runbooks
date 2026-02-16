@@ -5,13 +5,13 @@ const STORAGE_KEY = "runbooks-data";
 const CATEGORIES_KEY = "runbooks-categories";
 const PREFS_KEY = "runbooks-prefs";
 
-const DEFAULT_RUNBOOKS: Runbook[] = [
+export const DEFAULT_RUNBOOKS: Runbook[] = [
   {
     id: "example-1",
     name: "Running Containers",
     description: "Show all running containers with key details",
     commands: [
-      'ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}"',
+      'docker ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}"',
     ],
     tags: ["info"],
     createdAt: "2026-01-01T00:00:00Z",
@@ -21,7 +21,7 @@ const DEFAULT_RUNBOOKS: Runbook[] = [
     id: "example-2",
     name: "Disk Usage",
     description: "Check how much disk space Docker is using",
-    commands: ["system df"],
+    commands: ["docker system df"],
     tags: ["info"],
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
@@ -30,7 +30,7 @@ const DEFAULT_RUNBOOKS: Runbook[] = [
     id: "example-3",
     name: "Quick Cleanup",
     description: "Remove stopped containers and dangling images",
-    commands: ["container prune -f", "image prune -f"],
+    commands: ["docker container prune -f", "docker image prune -f"],
     tags: ["cleanup"],
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
@@ -39,7 +39,7 @@ const DEFAULT_RUNBOOKS: Runbook[] = [
     id: "example-4",
     name: "Full Reset",
     description: "Remove all unused containers, networks, images, and volumes",
-    commands: ["system prune -af --volumes"],
+    commands: ["docker system prune -af --volumes"],
     tags: ["cleanup", "caution"],
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
@@ -48,7 +48,7 @@ const DEFAULT_RUNBOOKS: Runbook[] = [
     id: "example-5",
     name: "Network Overview",
     description: "List all Docker networks",
-    commands: ["network ls"],
+    commands: ["docker network ls"],
     tags: ["info"],
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
@@ -58,8 +58,8 @@ const DEFAULT_RUNBOOKS: Runbook[] = [
     name: "Volume Inventory",
     description: "List all volumes and check for dangling ones",
     commands: [
-      "volume ls",
-      'volume ls --filter "dangling=true"',
+      "docker volume ls",
+      'docker volume ls --filter "dangling=true"',
     ],
     tags: ["info"],
     createdAt: "2026-01-01T00:00:00Z",
@@ -105,6 +105,11 @@ export function exportRunbooks(runbooks: Runbook[], categories?: Category[]): vo
   a.download = `runbooks-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function getMissingDefaults(current: Runbook[]): Runbook[] {
+  const ids = new Set(current.map((r) => r.id));
+  return DEFAULT_RUNBOOKS.filter((r) => !ids.has(r.id));
 }
 
 export function loadPreference<T>(key: string, fallback: T): T {

@@ -39,10 +39,6 @@ function validateCommands(raw: string): string[] {
     if (!line || line.startsWith("#")) continue;
 
     // Phase 1: Basic pattern checks
-    if (/^docker\s+/i.test(line)) {
-      warnings.push(`Line ${i + 1}: Remove leading "docker" — the extension adds it automatically.`);
-      continue;
-    }
     if (/[;&|]/.test(line)) {
       warnings.push(`Line ${i + 1}: Shell operators (;, &, |) may not work. Use separate lines instead.`);
     }
@@ -50,8 +46,9 @@ function validateCommands(raw: string): string[] {
       warnings.push(`Line ${i + 1}: Variable substitution ($VAR) is not supported.`);
     }
 
-    // Phase 2: Command tree validation
-    const tokens = line.split(/\s+/);
+    // Strip optional "docker" prefix for command tree validation
+    const stripped = line.replace(/^docker\s+/i, "");
+    const tokens = stripped.split(/\s+/);
     const cmd = tokens[0].toLowerCase();
 
     if (!ALL_COMMANDS.has(cmd)) {
@@ -69,7 +66,6 @@ function validateCommands(raw: string): string[] {
       const subs = DOCKER_COMMANDS[cmd].subcommands;
       if (subs && tokens.length > 1) {
         const sub = tokens[1].toLowerCase();
-        // Skip if it looks like a flag (e.g., compose --file)
         if (!sub.startsWith("-") && !(sub in subs)) {
           const subSuggestion = findClosest(sub, Object.keys(subs));
           if (subSuggestion) {
@@ -199,6 +195,9 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
               Commands (one per line) *
             </Typography>
             <CommandEditor value={commands} onChange={setCommands} />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+              Paste commands directly from terminals or docs. The &quot;docker&quot; prefix is optional.
+            </Typography>
           </div>
           {commandWarnings.length > 0 && (
             <Alert severity="warning" sx={{ py: 0, "& .MuiAlert-message": { fontSize: "0.8rem" } }}>

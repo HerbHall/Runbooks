@@ -31,7 +31,7 @@ import { RunbookCard } from "./RunbookCard";
 import { CategoryBadge } from "./CategoryBadge";
 
 const getLayoutSx = (mode: LayoutMode, compact: boolean) => {
-  const gap = compact ? 1 : 1.5;
+  const gap = compact ? 0.5 : 1;
   if (mode === "list") {
     return { display: "flex", flexDirection: "column" as const, gap, alignContent: "start" };
   }
@@ -43,18 +43,12 @@ const getLayoutSx = (mode: LayoutMode, compact: boolean) => {
   };
 };
 
-interface SubGroup {
-  tag: string;
-  runbooks: Runbook[];
-}
-
 interface PrimaryGroup {
   tag: string;
   color?: string;
   icon?: string;
   category?: Category;
-  direct: Runbook[];
-  subgroups: SubGroup[];
+  runbooks: Runbook[];
 }
 
 export function RunbookList() {
@@ -140,51 +134,45 @@ export function RunbookList() {
           color: cat.color,
           icon: cat.icon,
           category: cat,
-          direct: catGroups.get(cat.id) ?? [],
-          subgroups: [],
+          runbooks: catGroups.get(cat.id) ?? [],
         }));
 
       if (ungrouped.length > 0) {
-        result.push({ tag: "Uncategorized", direct: ungrouped, subgroups: [] });
+        result.push({ tag: "Uncategorized", runbooks: ungrouped });
       }
       return result;
     }
 
-    // groupMode === "tag"
-    const primaryMap = new Map<string, { direct: Runbook[]; subs: Map<string, Runbook[]> }>();
+    // groupMode === "tag" — group by first tag (case-insensitive), sort within by remaining tags
+    const primaryMap = new Map<string, { display: string; items: Runbook[] }>();
     const ungrouped: Runbook[] = [];
 
     for (const r of sorted) {
       if (r.tags.length === 0) {
         ungrouped.push(r);
       } else {
-        const primary = r.tags[0];
-        if (!primaryMap.has(primary)) {
-          primaryMap.set(primary, { direct: [], subs: new Map() });
+        const key = r.tags[0].trim().toLowerCase();
+        if (!primaryMap.has(key)) {
+          primaryMap.set(key, { display: r.tags[0].trim(), items: [] });
         }
-        const group = primaryMap.get(primary)!;
-        if (r.tags.length >= 2) {
-          const sub = r.tags[1];
-          if (!group.subs.has(sub)) group.subs.set(sub, []);
-          group.subs.get(sub)!.push(r);
-        } else {
-          group.direct.push(r);
-        }
+        primaryMap.get(key)!.items.push(r);
       }
     }
 
+    // Within each group, sort by secondary tags then name
     const result: PrimaryGroup[] = [...primaryMap.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([tag, { direct, subs }]) => ({
-        tag,
-        direct,
-        subgroups: [...subs.entries()]
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([subTag, subRunbooks]) => ({ tag: subTag, runbooks: subRunbooks })),
+      .map(([, { display, items }]) => ({
+        tag: display,
+        runbooks: items.sort((a, b) => {
+          const aSub = a.tags.slice(1).join("/");
+          const bSub = b.tags.slice(1).join("/");
+          return aSub.localeCompare(bSub) || a.name.localeCompare(b.name);
+        }),
       }));
 
     if (ungrouped.length > 0) {
-      result.push({ tag: "Ungrouped", direct: ungrouped, subgroups: [] });
+      result.push({ tag: "Ungrouped", runbooks: ungrouped });
     }
     return result;
   }, [sorted, groupMode, categories, categoryMap]);
@@ -244,8 +232,7 @@ export function RunbookList() {
   const expandAllCards = () => setCollapsedCards(new Set());
   const collapseAllCards = () => setCollapsedCards(new Set(sorted.map((r) => r.id)));
 
-  const totalInGroup = (g: PrimaryGroup) =>
-    g.direct.length + g.subgroups.reduce((sum, s) => sum + s.runbooks.length, 0);
+  const totalInGroup = (g: PrimaryGroup) => g.runbooks.length;
 
   const groupLabel = groupMode === "none" ? "Group" : groupMode === "tag" ? "By Tag" : "By Category";
 
@@ -360,71 +347,41 @@ export function RunbookList() {
         </Box>
       ) : groups ? (
         <Box sx={{ flex: 1, overflow: "auto" }}>
-          <Stack spacing={2}>
+          <Stack spacing={0.75}>
             {groups.map((group) => (
               <Box key={group.tag}>
-                {/* Group header */}
                 <Stack
                   direction="row"
                   alignItems="center"
                   spacing={0.5}
                   onClick={() => toggleCollapse(group.tag)}
-                  sx={{ cursor: "pointer", mb: 0.5, userSelect: "none" }}
+                  sx={{
+                    cursor: "pointer",
+                    userSelect: "none",
+                    py: 0.25,
+                    borderBottom: 1,
+                    borderColor: "divider",
+                  }}
                 >
-                  <IconButton size="small">
-                    {collapsed.has(group.tag) ? (
-                      <ExpandMoreIcon fontSize="small" />
-                    ) : (
-                      <ExpandLessIcon fontSize="small" />
-                    )}
-                  </IconButton>
+                  {collapsed.has(group.tag) ? (
+                    <ExpandMoreIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
+                  ) : (
+                    <ExpandLessIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
+                  )}
                   {group.category ? (
                     <CategoryBadge category={group.category} />
                   ) : (
-                    <Chip label={group.tag} size="small" />
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {group.tag}
+                    </Typography>
                   )}
-                  <Typography variant="body2" color="text.secondary">
-                    ({totalInGroup(group)})
+                  <Typography variant="caption" color="text.secondary">
+                    {totalInGroup(group)}
                   </Typography>
                 </Stack>
                 <Collapse in={!collapsed.has(group.tag)}>
-                  <Box sx={{ pl: 2 }}>
-                    {group.direct.length > 0 && (
-                      <Box sx={{ ...layoutSx, mb: group.subgroups.length > 0 ? 1.5 : 0 }}>
-                        {group.direct.map(renderCard)}
-                      </Box>
-                    )}
-                    {group.subgroups.map((sub) => {
-                      const subKey = `${group.tag}/${sub.tag}`;
-                      return (
-                        <Box key={subKey} sx={{ mb: 1 }}>
-                          <Stack
-                            direction="row"
-                            alignItems="center"
-                            spacing={0.5}
-                            onClick={() => toggleCollapse(subKey)}
-                            sx={{ cursor: "pointer", mb: 0.5, userSelect: "none" }}
-                          >
-                            <IconButton size="small">
-                              {collapsed.has(subKey) ? (
-                                <ExpandMoreIcon sx={{ fontSize: "1rem" }} />
-                              ) : (
-                                <ExpandLessIcon sx={{ fontSize: "1rem" }} />
-                              )}
-                            </IconButton>
-                            <Chip label={sub.tag} size="small" variant="outlined" />
-                            <Typography variant="body2" color="text.secondary">
-                              ({sub.runbooks.length})
-                            </Typography>
-                          </Stack>
-                          <Collapse in={!collapsed.has(subKey)}>
-                            <Box sx={{ ...layoutSx, pl: 2 }}>
-                              {sub.runbooks.map(renderCard)}
-                            </Box>
-                          </Collapse>
-                        </Box>
-                      );
-                    })}
+                  <Box sx={{ ...layoutSx, pl: 1, pt: 0.5 }}>
+                    {group.runbooks.map(renderCard)}
                   </Box>
                 </Collapse>
               </Box>

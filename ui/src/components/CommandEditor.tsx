@@ -25,11 +25,16 @@ function highlightDocker(code: string): string {
       let result = "";
       let remaining = escaped;
       const tokens = trimmed.split(/\s+/);
-      const firstToken = tokens[0].toLowerCase();
 
-      // Check if first token is a known command or management command
-      const isKnownCommand = ALL_COMMANDS.has(firstToken);
-      const isMgmtCommand = MANAGEMENT_COMMANDS.has(firstToken);
+      // Handle optional "docker" prefix — treat it as a neutral keyword
+      let cmdOffset = 0;
+      if (tokens[0].toLowerCase() === "docker" && tokens.length > 1) {
+        cmdOffset = 1;
+      }
+
+      const cmdToken = tokens[cmdOffset]?.toLowerCase() ?? "";
+      const isKnownCommand = ALL_COMMANDS.has(cmdToken);
+      const isMgmtCommand = MANAGEMENT_COMMANDS.has(cmdToken);
 
       for (let i = 0; i < tokens.length; i++) {
         const token = escapeHtml(tokens[i]);
@@ -39,26 +44,24 @@ function highlightDocker(code: string): string {
         }
         remaining = remaining.slice(tokenIdx + token.length);
 
-        if (i === 0 && isKnownCommand) {
-          // First token: known command (blue)
+        if (i < cmdOffset) {
+          // "docker" prefix — dim keyword
+          result += `<span style="color:var(--docker-comment)">${token}</span>`;
+        } else if (i === cmdOffset && isKnownCommand) {
           result += `<span style="color:var(--docker-command)">${token}</span>`;
-        } else if (i === 1 && isMgmtCommand) {
-          // Second token after management command: sub-command
-          const subs = DOCKER_COMMANDS[firstToken]?.subcommands;
-          const isValidSub = subs && tokens[1].toLowerCase() in subs;
+        } else if (i === cmdOffset + 1 && isMgmtCommand) {
+          const subs = DOCKER_COMMANDS[cmdToken]?.subcommands;
+          const isValidSub = subs && tokens[i].toLowerCase() in subs;
           if (isValidSub) {
             result += `<span style="color:var(--docker-subcommand)">${token}</span>`;
           } else {
             result += `<span style="color:var(--docker-unknown);text-decoration:wavy underline var(--docker-unknown)">${token}</span>`;
           }
-        } else if (i === 0 && !isKnownCommand && trimmed.length > 0) {
-          // Unknown first token
+        } else if (i === cmdOffset && !isKnownCommand) {
           result += `<span style="color:var(--docker-unknown);text-decoration:wavy underline var(--docker-unknown)">${token}</span>`;
         } else if (/^--?[a-zA-Z]/.test(tokens[i])) {
-          // Flags
           result += `<span style="color:var(--docker-flag)">${token}</span>`;
         } else if (/^["']/.test(tokens[i])) {
-          // Quoted strings
           result += `<span style="color:var(--docker-string)">${token}</span>`;
         } else {
           result += token;
@@ -121,7 +124,7 @@ export function CommandEditor({ value, onChange }: CommandEditorProps) {
         />
       </Box>
       <FormHelperText>
-        Each line is a Docker command, e.g. &apos;container prune -f&apos;
+        Paste Docker commands directly — &quot;docker&quot; prefix is optional
       </FormHelperText>
     </Box>
   );

@@ -5,6 +5,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
 import SettingsIcon from "@mui/icons-material/Settings";
+import RestoreIcon from "@mui/icons-material/Restore";
 import { RunbookList } from "./components/RunbookList";
 import { RunbookFormDialog } from "./components/RunbookFormDialog";
 import { CategoryManagementDialog } from "./components/CategoryManagementDialog";
@@ -19,7 +20,7 @@ export function useDockerDesktopClient() {
 }
 
 export default function App() {
-  const { runbooks, replaceAll } = useRunbooks();
+  const { runbooks, replaceAll, restoreDefaults } = useRunbooks();
   const { categories, replaceAllCategories } = useCategories();
   const [formOpen, setFormOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -60,6 +61,16 @@ export default function App() {
       >
         <Typography variant="h3">Runbooks</Typography>
         <Stack direction="row" spacing={1}>
+          <Button size="small" startIcon={<RestoreIcon />} onClick={() => {
+            const count = restoreDefaults();
+            if (count > 0) {
+              ddClient.desktopUI.toast.success(`Restored ${count} example runbooks`);
+            } else {
+              ddClient.desktopUI.toast.success("All example runbooks already present");
+            }
+          }}>
+            Examples
+          </Button>
           <Button size="small" startIcon={<SettingsIcon />} onClick={() => setCategoryDialogOpen(true)}>
             Categories
           </Button>
