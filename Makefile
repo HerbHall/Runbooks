@@ -1,5 +1,6 @@
 IMAGE ?= herbhall/runbooks
 TAG ?= latest
+VERSION ?= $(shell node -p "require('./ui/package.json').version" 2>/dev/null || echo "0.1.0")
 
 BUILDER = buildx-multi-arch
 
@@ -10,7 +11,7 @@ INFO_COLOR = \033[0;36m
 NO_COLOR   = \033[m
 
 build-extension: ## Build the extension image
-	docker build --tag=$(IMAGE):$(TAG) .
+	docker build --build-arg VERSION=$(VERSION) --tag=$(IMAGE):$(TAG) .
 
 install-extension: build-extension ## Install the extension
 	docker extension install $(IMAGE):$(TAG)
@@ -25,7 +26,7 @@ prepare-buildx: ## Create buildx builder for multi-arch build
 	docker buildx inspect $(BUILDER) || docker buildx create --name=$(BUILDER) --driver=docker-container --driver-opt=network=host
 
 push-extension: prepare-buildx ## Build and push multi-arch extension image
-	docker buildx build --push --builder=$(BUILDER) --platform=linux/amd64,linux/arm64 --build-arg TAG=$(TAG) --tag=$(IMAGE):$(TAG) .
+	docker buildx build --push --builder=$(BUILDER) --platform=linux/amd64,linux/arm64 --build-arg VERSION=$(VERSION) --tag=$(IMAGE):$(TAG) .
 
 validate-extension: ## Validate the extension
 	docker extension validate $(IMAGE):$(TAG)

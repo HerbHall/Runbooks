@@ -91,6 +91,9 @@ export default function App() {
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         Saved command scripts for Docker Desktop. Create, organize, and execute
         Docker commands with one click.
+        <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 1 }}>
+          v{__APP_VERSION__}
+        </Typography>
       </Typography>
 
       <RunbookList />
