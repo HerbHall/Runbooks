@@ -4,6 +4,20 @@
 
 A Docker Desktop Extension that lets you create, organize, and execute Docker command scripts with one click. Think of it as a personal runbook library built right into Docker Desktop.
 
+## Screenshots
+
+### Grid View
+
+![Grid view with sample runbooks](docs/screenshots/grid-view.png)
+
+### Expanded Cards
+
+![Expanded cards showing command details](docs/screenshots/expanded-cards.png)
+
+### Search and Filter
+
+![Search filtering runbooks](docs/screenshots/search-filter.png)
+
 ## Features
 
 - Create, edit, and delete Docker command scripts
