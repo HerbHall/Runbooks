@@ -4,17 +4,23 @@
 
 A Docker Desktop Extension that lets you create, organize, and execute Docker command scripts with one click. Think of it as a personal runbook library built right into Docker Desktop.
 
-## Features (Planned)
+## Features
 
-- Create and save Docker command scripts
-- Organize with tags and categories
-- One-click execution from Docker Desktop
-- View command output inline
-- Import/export runbooks
+- Create, edit, and delete Docker command scripts
+- Organize with tags and nested category grouping
+- One-click execution with inline output display
+- Search, sort, and filter runbooks
+- Grid and list layout modes with compact density option
+- Collapsible cards with expand/collapse all
+- Tag autocomplete with chip input
+- Command validation with syntax highlighting
+- Import/export runbooks (JSON and legacy format)
+- Category management with color-coded badges
+- Version display in footer
 
 ## Installation
 
-> **Status:** In development. Not yet published to Docker Hub.
+> **Status:** v0.1.0 — builds locally. Not yet published to Docker Hub.
 
 ```bash
 # Build locally
@@ -31,7 +37,7 @@ make install-extension
 cd ui && npm install
 
 # Start hot-reload dev server
-npm start
+npm run dev
 
 # In another terminal — build and attach
 cd ..
