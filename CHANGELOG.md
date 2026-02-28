@@ -9,14 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- React Error Boundary with themed fallback UI and recovery (#58)
+- Confirmation dialog for destructive Docker commands (#59)
+- Unit test suite with Vitest -- 44 tests across 3 files (#60)
+- Test job in CI pipeline (#60)
 - User feedback and support links with diagnostic review (#65)
 - Community health files: CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, PR template, CODEOWNERS (#66)
 - ESLint with TypeScript and React plugins (#67)
 - Dependabot for npm and GitHub Actions dependencies (#69)
+- Dockerfile extension labels: screenshots, changelog, additional URLs (#56)
+- Published multi-arch image to Docker Hub (#57)
 
 ### Changed
 
-- CI split into parallel Lint, Type Check, and Build jobs (#68)
+- CI split into parallel Lint, Type Check, Test, and Build jobs (#68, #60)
 - Repo settings: squash-only merges, auto-delete branches, branch protection (#69)
 
 ## [0.1.0] - 2026-02-28

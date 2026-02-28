@@ -37,13 +37,14 @@ A Docker Desktop Extension that lets you create, organize, and execute Docker co
 
 ## Installation
 
-> **Status:** v0.1.0 — builds locally. Not yet published to Docker Hub.
+```bash
+docker extension install herbhall/runbooks
+```
+
+Or build from source:
 
 ```bash
-# Build locally
 make build-extension
-
-# Install into Docker Desktop
 make install-extension
 ```
 
