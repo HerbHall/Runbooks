@@ -5,6 +5,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { RunbookProvider } from "./context/RunbookContext";
 import { CategoryProvider } from "./context/CategoryContext";
 import App from "./App";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,
@@ -14,11 +15,13 @@ root.render(
   <React.StrictMode>
     <DockerMuiThemeProvider>
       <CssBaseline />
-      <RunbookProvider>
-        <CategoryProvider>
-          <App />
-        </CategoryProvider>
-      </RunbookProvider>
+      <ErrorBoundary>
+        <RunbookProvider>
+          <CategoryProvider>
+            <App />
+          </CategoryProvider>
+        </RunbookProvider>
+      </ErrorBoundary>
     </DockerMuiThemeProvider>
   </React.StrictMode>,
 );
