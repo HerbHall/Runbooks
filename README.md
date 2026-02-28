@@ -75,6 +75,10 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for developmen
 
 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+
 ## License
 
 [MIT](LICENSE)
