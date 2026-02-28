@@ -12,7 +12,7 @@
 - **Repo:** https://github.com/HerbHall/Runbooks
 - **License:** MIT
 - **Owner:** Herb Hall (HerbHall)
-- **Status:** Scaffold verified, builds clean
+- **Status:** Feature-complete MVP (v0.1.0), untested in Docker Desktop
 - **Workspace:** `D:\DevSpace\runbooks.code-workspace` (DevSpace root, per convention)
 
 ## Architecture
@@ -29,20 +29,36 @@ Runbooks/
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── vite.config.ts     # Vite build config (base: ./, outDir: build)
-│   ├── index.html          # Vite entry HTML (root of ui/, not public/)
+│   ├── index.html         # Vite entry HTML (root of ui/, not public/)
 │   └── src/
 │       ├── index.tsx      # Entry point with DockerMuiThemeProvider
-│       ├── App.tsx        # Main layout, initializes ddClient
+│       ├── App.tsx        # Main layout, version display, ddClient init
+│       ├── types.ts       # Runbook type definition
+│       ├── storage.ts     # localStorage CRUD + import/export
+│       ├── docker-commands.ts  # Command validation rules + syntax data
+│       ├── category-defaults.ts # Default category definitions
+│       ├── vite-env.d.ts  # Vite type declarations
+│       ├── context/
+│       │   ├── RunbookContext.tsx   # Runbook state + CRUD operations
+│       │   └── CategoryContext.tsx  # Category management state
 │       └── components/
-│           └── RunbookList.tsx  # Card-based list with sample data
+│           ├── RunbookList.tsx      # Main view: search, sort, group, layout
+│           ├── RunbookCard.tsx      # Individual runbook card display
+│           ├── RunbookFormDialog.tsx # Create/edit dialog with tag autocomplete
+│           ├── RunbookDeleteDialog.tsx    # Delete confirmation
+│           ├── RunbookExecutionDialog.tsx # Command execution + output
+│           ├── CommandEditor.tsx    # Syntax-highlighted command input
+│           ├── CategoryBadge.tsx    # Colored category chip
+│           └── CategoryManagementDialog.tsx # Category CRUD
 ├── .coordination/         # Session handoff and status tracking
-│   └── handoff.md         # ← START HERE for continuation context
+│   └── handoff.md
 ├── docs/
 │   └── decisions/         # Architecture Decision Records (ADR)
 │       ├── ADR-001-project-name.md
 │       ├── ADR-002-license-and-monetization.md
 │       ├── ADR-003-architecture-frontend-only.md
-│       └── ADR-004-scaffold-strategy.md
+│       ├── ADR-004-scaffold-strategy.md
+│       └── ADR-005-storage-backend.md
 └── CLAUDE.md              # This file
 ```
 
@@ -54,6 +70,7 @@ All decisions are recorded as ADRs in `docs/decisions/`. Summary:
 2. **License:** MIT — maximally permissive, compatible with donations (ADR-002)
 3. **Architecture:** Frontend-only — Extension SDK's `docker.cli.exec()` handles all Docker interaction, no Go backend needed (ADR-003)
 4. **Scaffold:** Based on `docker extension init` output, hand-built to match DevSpace conventions (ADR-004)
+5. **Storage:** localStorage — simple, no backend needed, supports import/export for portability (ADR-005)
 
 ## Extension SDK Patterns
 
@@ -94,7 +111,7 @@ make remove-extension
 
 ## What's Next
 
-See `.coordination/handoff.md` for current status and next steps.
+Extension needs Docker Desktop integration testing — build, install, and verify all features work in the actual extension environment.
 
 ## Conventions
 
