@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { Box, Typography, Stack, Button } from "@mui/material";
+import { Box, Typography, Stack, Button, Link } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
@@ -51,6 +51,11 @@ export default function App() {
     e.target.value = "";
   };
 
+  const handleLinkClick = (url: string) => (e: React.MouseEvent) => {
+		e.preventDefault();
+		ddClient.host.openExternal(url);
+	};
+
   return (
     <Box sx={{ p: 3, height: "100vh", display: "flex", flexDirection: "column" }}>
       <Stack
@@ -100,6 +105,37 @@ export default function App() {
 
       <RunbookFormDialog open={formOpen} onClose={() => setFormOpen(false)} />
       <CategoryManagementDialog open={categoryDialogOpen} onClose={() => setCategoryDialogOpen(false)} />
+
+	    <Box sx={{ mt: "auto", pt: 2, pb: 1, textAlign: "center" }}>
+				<Typography variant="caption" color="text.secondary">
+					Runbooks v{__APP_VERSION__}&nbsp;•&nbsp;
+					<Link
+						href="#"
+						onClick={handleLinkClick(
+							"https://github.com/HerbHall/Runbooks/issues/new?template=bug_report.yml",
+						)}
+						sx={{
+							color: "text.secondary",
+							cursor: "pointer",
+							textDecoration: "underline",
+						}}
+					>
+						Report a Bug
+					</Link>
+					&nbsp;•&nbsp;
+					<Link
+						href="#"
+						onClick={handleLinkClick("https://github.com/HerbHall/Runbooks")}
+						sx={{
+							color: "text.secondary",
+							cursor: "pointer",
+							textDecoration: "underline",
+						}}
+					>
+						GitHub
+					</Link>
+				</Typography>
+			</Box>
 
       <input
         ref={fileInputRef}
