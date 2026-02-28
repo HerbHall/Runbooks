@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependabot for npm and GitHub Actions dependencies (#69)
 - Dockerfile extension labels: screenshots, changelog, additional URLs (#56)
 - Published multi-arch image to Docker Hub (#57)
+- GitHub Actions release workflow for automated Docker Hub publishing (#83)
 
 ### Changed
 
