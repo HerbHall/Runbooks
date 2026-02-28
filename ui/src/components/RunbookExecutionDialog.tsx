@@ -9,9 +9,14 @@ import {
   Stack,
   Box,
   CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import type { Runbook, CommandResult, ExecutionStatus } from "../types";
 import { useDockerDesktopClient } from "../App";
+import { getDestructiveWarnings, type DestructiveWarning } from "../utils/destructive-commands";
 
 interface RunbookExecutionDialogProps {
   open: boolean;
@@ -32,6 +37,8 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
   const [status, setStatus] = useState<ExecutionStatus>("idle");
   const [results, setResults] = useState<CommandResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [warnings, setWarnings] = useState<DestructiveWarning[]>([]);
   const abortRef = useRef(false);
 
   const execute = useCallback(async () => {
@@ -91,7 +98,13 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
 
   useEffect(() => {
     if (open) {
-      execute();
+      const detected = getDestructiveWarnings(runbook.commands);
+      if (detected.length > 0) {
+        setWarnings(detected);
+        setNeedsConfirmation(true);
+      } else {
+        execute();
+      }
     }
     return () => {
       abortRef.current = true;
@@ -105,8 +118,56 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
     setStatus("idle");
     setResults([]);
     setCurrentIndex(-1);
+    setNeedsConfirmation(false);
+    setWarnings([]);
     onClose();
   };
+
+  const handleConfirm = () => {
+    setNeedsConfirmation(false);
+    execute();
+  };
+
+  if (needsConfirmation) {
+    return (
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <WarningAmberIcon color="warning" />
+          Destructive Commands Detected
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            The following commands in <strong>{runbook.name}</strong> may delete data or remove
+            Docker resources:
+          </Typography>
+          <List dense disablePadding>
+            {warnings.map((w, i) => (
+              <ListItem key={i} disableGutters sx={{ alignItems: "flex-start" }}>
+                <ListItemText
+                  primary={
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      sx={{ fontFamily: "monospace", fontWeight: 600 }}
+                    >
+                      $ {w.command}
+                    </Typography>
+                  }
+                  secondary={w.description}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleConfirm} color="error" variant="contained">
+            Execute Anyway
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
