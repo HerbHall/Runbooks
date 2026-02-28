@@ -1,5 +1,8 @@
 # Runbooks
 
+[![CI](https://github.com/HerbHall/Runbooks/actions/workflows/ci.yml/badge.svg)](https://github.com/HerbHall/Runbooks/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Saved command scripts for Docker Desktop.**
 
 A Docker Desktop Extension that lets you create, organize, and execute Docker command scripts with one click. Think of it as a personal runbook library built right into Docker Desktop.
@@ -65,6 +68,12 @@ make dev-attach
 Frontend-only Docker Desktop Extension built with React, TypeScript, and Material UI. Uses the Docker Extension SDK's `docker.cli.exec()` to run commands directly — no backend service required.
 
 See `docs/decisions/` for Architecture Decision Records documenting all technical choices.
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
 
 ## License
 
