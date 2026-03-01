@@ -28,6 +28,7 @@ import {
   MANAGEMENT_COMMANDS,
   findClosest,
 } from "../docker-commands";
+import { parseVariables } from "../utils/variables";
 
 const COMMON_TAGS = ["info", "cleanup", "dev", "production", "maintenance", "monitoring", "caution"];
 
@@ -98,6 +99,10 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
   const [categoryId, setCategoryId] = useState("");
 
   const commandWarnings = useMemo(() => validateCommands(commands), [commands]);
+  const variableCount = useMemo(
+    () => parseVariables(commands.split("\n").map((c) => c.trim()).filter(Boolean)).length,
+    [commands],
+  );
 
   const allTags = useMemo(() => {
     const tagSet = new Set(COMMON_TAGS);
@@ -199,6 +204,12 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
               Paste commands directly from terminals or docs. The &quot;docker&quot; prefix is optional.
             </Typography>
           </div>
+          {variableCount > 0 && (
+            <Alert severity="info" sx={{ py: 0, "& .MuiAlert-message": { fontSize: "0.8rem" } }}>
+              {variableCount} variable{variableCount > 1 ? "s" : ""} detected — values will be
+              prompted before execution.
+            </Alert>
+          )}
           {commandWarnings.length > 0 && (
             <Alert severity="warning" sx={{ py: 0, "& .MuiAlert-message": { fontSize: "0.8rem" } }}>
               {commandWarnings.map((w) => (
