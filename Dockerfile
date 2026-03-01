@@ -22,6 +22,7 @@ LABEL org.opencontainers.image.title="Runbooks" \
     com.docker.extension.detailed-description="Create, organize, and execute saved Docker command scripts directly from Docker Desktop." \
     com.docker.extension.publisher-url="https://github.com/HerbHall" \
     com.docker.extension.additional-urls="[{\"title\":\"Documentation\",\"url\":\"https://github.com/HerbHall/Runbooks#readme\"},{\"title\":\"Report a Bug\",\"url\":\"https://github.com/HerbHall/Runbooks/issues/new?template=bug_report.yml\"},{\"title\":\"Support\",\"url\":\"https://github.com/HerbHall/Runbooks/discussions\"}]" \
+    com.docker.extension.categories="utility-tools" \
     com.docker.extension.changelog="<ul><li>Create, edit, and execute Docker command scripts</li><li>Tag-based organization with nested grouping</li><li>Search, sort, and filter</li><li>Grid and list layouts with compact density</li><li>Command validation with syntax highlighting</li><li>Import/export runbooks</li></ul>"
 
 COPY metadata.json .
