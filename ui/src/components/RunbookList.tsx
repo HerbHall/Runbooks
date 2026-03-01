@@ -67,7 +67,9 @@ export function RunbookList() {
   const [compact, setCompact] = useState<boolean>(
     () => loadPreference<boolean>("compact", false),
   );
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [collapsed, setCollapsed] = useState<Set<string>>(
+    () => new Set(loadPreference<string[]>("collapsedGroups", [])),
+  );
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
 
   const categoryMap = useMemo(
@@ -182,6 +184,7 @@ export function RunbookList() {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
+      savePreference("collapsedGroups", [...next]);
       return next;
     });
   };

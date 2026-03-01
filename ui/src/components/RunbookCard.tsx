@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import EditIcon from "@mui/icons-material/Edit";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -58,6 +59,13 @@ export function RunbookCard({ runbook, category, collapsed = false, onToggleColl
             <Box sx={{ flex: 1 }} />
             <IconButton size="small" color="primary" title="Run" onClick={() => setExecOpen(true)}>
               <PlayArrowIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              title="Copy commands"
+              onClick={() => navigator.clipboard.writeText(runbook.commands.join("\n"))}
+            >
+              <ContentCopyIcon fontSize="small" />
             </IconButton>
             <IconButton size="small" title="Edit" onClick={() => setEditOpen(true)}>
               <EditIcon fontSize="small" />
