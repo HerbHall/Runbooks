@@ -17,6 +17,8 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import type { Runbook, CommandResult, ExecutionStatus } from "../types";
 import { useDockerDesktopClient } from "../App";
 import { getDestructiveWarnings, type DestructiveWarning } from "../utils/destructive-commands";
+import { hasVariables } from "../utils/variables";
+import { ParameterInputDialog } from "./ParameterInputDialog";
 
 interface RunbookExecutionDialogProps {
   open: boolean;
@@ -39,9 +41,12 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [warnings, setWarnings] = useState<DestructiveWarning[]>([]);
+  const [needsParameters, setNeedsParameters] = useState(false);
+  const [resolvedCommands, setResolvedCommands] = useState<string[] | null>(null);
   const abortRef = useRef(false);
 
-  const execute = useCallback(async () => {
+  const execute = useCallback(async (cmds?: string[]) => {
+    const commands = cmds ?? resolvedCommands ?? runbook.commands;
     abortRef.current = false;
     setStatus("running");
     setResults([]);
@@ -49,11 +54,11 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
 
     const collected: CommandResult[] = [];
 
-    for (let i = 0; i < runbook.commands.length; i++) {
+    for (let i = 0; i < commands.length; i++) {
       if (abortRef.current) break;
       setCurrentIndex(i);
 
-      const raw = runbook.commands[i].trim();
+      const raw = commands[i].trim();
       const tokens = parseCommand(raw);
       const start = performance.now();
 
@@ -94,16 +99,20 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
       ddClient.desktopUI.toast.success(`Runbook completed: ${runbook.name}`);
     }
     setCurrentIndex(-1);
-  }, [ddClient, runbook]);
+  }, [ddClient, runbook, resolvedCommands]);
 
   useEffect(() => {
     if (open) {
-      const detected = getDestructiveWarnings(runbook.commands);
-      if (detected.length > 0) {
-        setWarnings(detected);
-        setNeedsConfirmation(true);
+      if (hasVariables(runbook.commands)) {
+        setNeedsParameters(true);
       } else {
-        execute();
+        const detected = getDestructiveWarnings(runbook.commands);
+        if (detected.length > 0) {
+          setWarnings(detected);
+          setNeedsConfirmation(true);
+        } else {
+          execute();
+        }
       }
     }
     return () => {
@@ -119,6 +128,8 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
     setResults([]);
     setCurrentIndex(-1);
     setNeedsConfirmation(false);
+    setNeedsParameters(false);
+    setResolvedCommands(null);
     setWarnings([]);
     onClose();
   };
@@ -127,6 +138,29 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
     setNeedsConfirmation(false);
     execute();
   };
+
+  const handleParameterSubmit = (resolved: string[]) => {
+    setNeedsParameters(false);
+    setResolvedCommands(resolved);
+    const detected = getDestructiveWarnings(resolved);
+    if (detected.length > 0) {
+      setWarnings(detected);
+      setNeedsConfirmation(true);
+    } else {
+      execute(resolved);
+    }
+  };
+
+  if (needsParameters) {
+    return (
+      <ParameterInputDialog
+        open={open}
+        onClose={handleClose}
+        onRun={handleParameterSubmit}
+        runbook={runbook}
+      />
+    );
+  }
 
   if (needsConfirmation) {
     return (
@@ -177,7 +211,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
-          {runbook.commands.map((cmd, i) => (
+          {(resolvedCommands ?? runbook.commands).map((cmd, i) => (
             <Box key={i}>
               <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
                 $ {cmd}

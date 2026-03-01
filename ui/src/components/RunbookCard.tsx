@@ -15,6 +15,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import type { Runbook, Category } from "../types";
+import { VARIABLE_REGEX, escapeHtml } from "../utils/variables";
 import { RunbookFormDialog } from "./RunbookFormDialog";
 import { RunbookDeleteDialog } from "./RunbookDeleteDialog";
 import { RunbookExecutionDialog } from "./RunbookExecutionDialog";
@@ -86,7 +87,14 @@ export function RunbookCard({ runbook, category, collapsed = false, onToggleColl
                   m: 0,
                 }}
               >
-                {runbook.commands.join("\n")}
+                <code
+                  dangerouslySetInnerHTML={{
+                    __html: escapeHtml(runbook.commands.join("\n")).replace(
+                      new RegExp(VARIABLE_REGEX.source, "g"),
+                      (m) => `<span style="color:#cf6b00">${m}</span>`,
+                    ),
+                  }}
+                />
               </Box>
             </>
           </Collapse>

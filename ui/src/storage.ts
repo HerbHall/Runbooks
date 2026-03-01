@@ -65,6 +65,15 @@ export const DEFAULT_RUNBOOKS: Runbook[] = [
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
+  {
+    id: "example-7",
+    name: "Container Logs",
+    description: "View recent logs for a specific container",
+    commands: ["docker logs --tail {{lines=100}} {{container}}"],
+    tags: ["info"],
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z",
+  },
 ];
 
 export function loadRunbooks(): Runbook[] {

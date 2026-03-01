@@ -1,10 +1,7 @@
 import Editor from "react-simple-code-editor";
 import { Box, FormHelperText, useTheme } from "@mui/material";
 import { ALL_COMMANDS, MANAGEMENT_COMMANDS, DOCKER_COMMANDS } from "../docker-commands";
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+import { VARIABLE_REGEX, escapeHtml } from "../utils/variables";
 
 /** Regex-based Docker CLI syntax highlighter */
 function highlightDocker(code: string): string {
@@ -70,7 +67,11 @@ function highlightDocker(code: string): string {
       result += remaining;
       return result;
     })
-    .join("\n");
+    .join("\n")
+    .replace(
+      new RegExp(VARIABLE_REGEX.source, "g"),
+      (m) => `<span style="color:var(--docker-variable)">${m}</span>`,
+    );
 }
 
 interface CommandEditorProps {
@@ -89,6 +90,7 @@ export function CommandEditor({ value, onChange }: CommandEditorProps) {
     "--docker-string": isDark ? "#a5d6ff" : "#0a3069",
     "--docker-comment": isDark ? "#8b949e" : "#6e7781",
     "--docker-unknown": isDark ? "#f85149" : "#cf222e",
+    "--docker-variable": isDark ? "#ffa657" : "#cf6b00",
   } as React.CSSProperties;
 
   return (
@@ -124,7 +126,7 @@ export function CommandEditor({ value, onChange }: CommandEditorProps) {
         />
       </Box>
       <FormHelperText>
-        Paste Docker commands directly — &quot;docker&quot; prefix is optional
+        &quot;docker&quot; prefix is optional. Use {"{{name}}"} for variables.
       </FormHelperText>
     </Box>
   );
