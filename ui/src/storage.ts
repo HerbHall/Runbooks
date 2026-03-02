@@ -9,68 +9,92 @@ export const DEFAULT_RUNBOOKS: Runbook[] = [
   {
     id: "example-1",
     name: "Running Containers",
-    description: "Show all running containers with key details",
+    description: "Show all running containers with key details. Uses Go template formatting.",
     commands: [
       'docker ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}"',
     ],
-    tags: ["info"],
+    tags: ["monitoring"],
+    categoryId: "cat-operations",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
   {
     id: "example-2",
-    name: "Disk Usage",
-    description: "Check how much disk space Docker is using",
-    commands: ["docker system df"],
-    tags: ["info"],
+    name: "Container Logs",
+    description: "View recent logs for a container. Demonstrates variable options dropdown and container autocomplete.",
+    commands: ["docker logs --tail {{lines=100|50,100,500,1000}} {{container}}"],
+    tags: ["monitoring"],
+    categoryId: "cat-operations",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
   {
     id: "example-3",
-    name: "Quick Cleanup",
-    description: "Remove stopped containers and dangling images",
-    commands: ["docker container prune -f", "docker image prune -f"],
-    tags: ["cleanup"],
+    name: "Container Shell",
+    description: "Open an interactive shell in a running container. Uses option dropdown and container autocomplete.",
+    commands: ["docker exec -it {{container}} {{shell=/bin/sh|/bin/sh,/bin/bash,/bin/zsh}}"],
+    tags: ["debug"],
+    categoryId: "cat-development",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
   {
     id: "example-4",
-    name: "Full Reset",
-    description: "Remove all unused containers, networks, images, and volumes",
-    commands: ["docker system prune -af --volumes"],
-    tags: ["cleanup", "caution"],
+    name: "Image Inspector",
+    description: "Inspect an image's metadata and layer history. Uses image autocomplete and multi-command.",
+    commands: [
+      'docker inspect {{image}} --format "{{.Id}}\\n{{.RepoTags}}\\nSize: {{.Size}}"',
+      "docker history {{image}}",
+    ],
+    tags: ["debug"],
+    categoryId: "cat-development",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
   {
     id: "example-5",
-    name: "Network Overview",
-    description: "List all Docker networks",
-    commands: ["docker network ls"],
-    tags: ["info"],
+    name: "Disk Usage Report",
+    description: "Full breakdown of Docker disk usage across images, containers, and volumes.",
+    commands: [
+      "docker system df -v",
+      'docker image ls --format "table {{.Repository}}\\t{{.Tag}}\\t{{.Size}}"',
+      "docker volume ls",
+    ],
+    tags: ["maintenance"],
+    categoryId: "cat-maintenance",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
   {
     id: "example-6",
-    name: "Volume Inventory",
-    description: "List all volumes and check for dangling ones",
-    commands: [
-      "docker volume ls",
-      'docker volume ls --filter "dangling=true"',
-    ],
-    tags: ["info"],
+    name: "Quick Cleanup",
+    description: "Remove stopped containers and dangling images to free disk space.",
+    commands: ["docker container prune -f", "docker image prune -f"],
+    tags: ["maintenance", "destructive"],
+    categoryId: "cat-maintenance",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
   {
     id: "example-7",
-    name: "Container Logs",
-    description: "View recent logs for a specific container",
-    commands: ["docker logs --tail {{lines=100}} {{container}}"],
-    tags: ["info"],
+    name: "Full Reset",
+    description: "Remove ALL unused containers, networks, images, and volumes. Use with caution!",
+    commands: ["docker system prune -af --volumes"],
+    tags: ["maintenance", "destructive"],
+    categoryId: "cat-maintenance",
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: "example-8",
+    name: "Network Diagnostics",
+    description: "Inspect a Docker network and its connected containers. Uses network autocomplete.",
+    commands: [
+      "docker network ls",
+      "docker network inspect {{network}}",
+    ],
+    tags: ["monitoring"],
+    categoryId: "cat-operations",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
   },
@@ -116,9 +140,9 @@ export function exportRunbooks(runbooks: Runbook[], categories?: Category[]): vo
   URL.revokeObjectURL(url);
 }
 
-export function getMissingDefaults(current: Runbook[]): Runbook[] {
-  const ids = new Set(current.map((r) => r.id));
-  return DEFAULT_RUNBOOKS.filter((r) => !ids.has(r.id));
+export function resetExamples(current: Runbook[]): Runbook[] {
+  const withoutExamples = current.filter((r) => !r.id.startsWith("example-"));
+  return [...DEFAULT_RUNBOOKS, ...withoutExamples];
 }
 
 export function loadPreference<T>(key: string, fallback: T): T {

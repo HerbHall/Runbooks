@@ -7,9 +7,10 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
+import TuneIcon from "@mui/icons-material/Tune";
 import SettingsIcon from "@mui/icons-material/Settings";
-import RestoreIcon from "@mui/icons-material/Restore";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import FeedbackIcon from "@mui/icons-material/Feedback";
@@ -19,6 +20,8 @@ import { RunbookList } from "./components/RunbookList";
 import { RunbookFormDialog } from "./components/RunbookFormDialog";
 import { CategoryManagementDialog } from "./components/CategoryManagementDialog";
 import { DiagnosticDialog } from "./components/DiagnosticDialog";
+import { SettingsDialog } from "./components/SettingsDialog";
+import { GettingStartedDialog } from "./components/GettingStartedDialog";
 import { useRunbooks } from "./context/RunbookContext";
 import { useCategories } from "./context/CategoryContext";
 import { exportRunbooks, importRunbooks } from "./storage";
@@ -32,10 +35,12 @@ export function useDockerDesktopClient() {
 }
 
 export default function App() {
-  const { runbooks, replaceAll, restoreDefaults } = useRunbooks();
+  const { runbooks, replaceAll } = useRunbooks();
   const { categories, replaceAllCategories } = useCategories();
   const [formOpen, setFormOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
   const [helpAnchor, setHelpAnchor] = useState<null | HTMLElement>(null);
   const [diagnosticType, setDiagnosticType] = useState<"bug" | "feature" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -86,15 +91,8 @@ export default function App() {
       >
         <Typography variant="h3">Runbooks</Typography>
         <Stack direction="row" spacing={1}>
-          <Button size="small" startIcon={<RestoreIcon />} onClick={() => {
-            const count = restoreDefaults();
-            if (count > 0) {
-              ddClient.desktopUI.toast.success(`Restored ${count} example runbooks`);
-            } else {
-              ddClient.desktopUI.toast.success("All example runbooks already present");
-            }
-          }}>
-            Examples
+          <Button size="small" startIcon={<TuneIcon />} onClick={() => setSettingsOpen(true)}>
+            Settings
           </Button>
           <Button size="small" startIcon={<SettingsIcon />} onClick={() => setCategoryDialogOpen(true)}>
             Categories
@@ -117,6 +115,11 @@ export default function App() {
             open={Boolean(helpAnchor)}
             onClose={() => setHelpAnchor(null)}
           >
+            <MenuItem onClick={() => { setGettingStartedOpen(true); setHelpAnchor(null); }}>
+              <ListItemIcon><InfoOutlinedIcon fontSize="small" /></ListItemIcon>
+              <ListItemText>Getting Started</ListItemText>
+            </MenuItem>
+            <Divider />
             <MenuItem onClick={() => { setDiagnosticType("bug"); setHelpAnchor(null); }}>
               <ListItemIcon><BugReportIcon fontSize="small" /></ListItemIcon>
               <ListItemText>Report a Bug</ListItemText>
@@ -186,6 +189,8 @@ export default function App() {
 
       <RunbookFormDialog open={formOpen} onClose={() => setFormOpen(false)} />
       <CategoryManagementDialog open={categoryDialogOpen} onClose={() => setCategoryDialogOpen(false)} />
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <GettingStartedDialog open={gettingStartedOpen} onClose={() => setGettingStartedOpen(false)} />
       <DiagnosticDialog
         open={diagnosticType !== null}
         onClose={() => setDiagnosticType(null)}

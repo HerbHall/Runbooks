@@ -38,11 +38,12 @@ const getLayoutSx = (mode: LayoutMode, compact: boolean) => {
     return { display: "flex", flexDirection: "column" as const, gap, alignContent: "start" };
   }
   return {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-    gap,
-    alignContent: "start",
-    alignItems: "start",
+    columnWidth: "340px",
+    columnGap: gap,
+    "& > *": {
+      breakInside: "avoid",
+      mb: gap,
+    },
   };
 };
 
@@ -55,7 +56,7 @@ interface PrimaryGroup {
 }
 
 export function RunbookList() {
-  const { runbooks } = useRunbooks();
+  const { runbooks, showExamples } = useRunbooks();
   const { categories } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -99,10 +100,15 @@ export function RunbookList() {
 
   const layoutSx = useMemo(() => getLayoutSx(layoutMode, compact), [layoutMode, compact]);
 
+  const visibleRunbooks = useMemo(() => {
+    if (showExamples) return runbooks;
+    return runbooks.filter((r) => !r.id.startsWith("example-"));
+  }, [runbooks, showExamples]);
+
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return runbooks;
-    return runbooks.filter(
+    if (!q) return visibleRunbooks;
+    return visibleRunbooks.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         r.description.toLowerCase().includes(q) ||
@@ -110,7 +116,7 @@ export function RunbookList() {
         r.commands.some((c) => c.toLowerCase().includes(q)) ||
         (r.categoryId && categoryMap.get(r.categoryId)?.name.toLowerCase().includes(q)),
     );
-  }, [runbooks, searchQuery, categoryMap]);
+  }, [visibleRunbooks, searchQuery, categoryMap]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];

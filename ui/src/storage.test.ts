@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   loadPreference,
   savePreference,
-  getMissingDefaults,
+  resetExamples,
   DEFAULT_RUNBOOKS,
 } from "./storage";
 import type { Runbook } from "./types";
@@ -55,28 +55,43 @@ describe("savePreference / loadPreference", () => {
   });
 });
 
-describe("getMissingDefaults", () => {
-  it("returns all defaults when current list is empty", () => {
-    const missing = getMissingDefaults([]);
-    expect(missing).toHaveLength(DEFAULT_RUNBOOKS.length);
-    expect(missing).toEqual(DEFAULT_RUNBOOKS);
+describe("DEFAULT_RUNBOOKS", () => {
+  it("has the expected number of examples", () => {
+    expect(DEFAULT_RUNBOOKS).toHaveLength(8);
   });
 
-  it("returns empty array when all defaults are present", () => {
-    const missing = getMissingDefaults(DEFAULT_RUNBOOKS);
-    expect(missing).toHaveLength(0);
+  it("all examples have example- id prefix", () => {
+    for (const r of DEFAULT_RUNBOOKS) {
+      expect(r.id).toMatch(/^example-/);
+    }
   });
 
-  it("returns only the missing defaults", () => {
-    const current = [DEFAULT_RUNBOOKS[0], DEFAULT_RUNBOOKS[1]];
-    const missing = getMissingDefaults(current);
-    expect(missing).toHaveLength(DEFAULT_RUNBOOKS.length - 2);
-    const missingIds = missing.map((r) => r.id);
-    expect(missingIds).not.toContain(DEFAULT_RUNBOOKS[0].id);
-    expect(missingIds).not.toContain(DEFAULT_RUNBOOKS[1].id);
+  it("all examples have a categoryId assigned", () => {
+    for (const r of DEFAULT_RUNBOOKS) {
+      expect(r.categoryId).toBeTruthy();
+    }
+  });
+});
+
+describe("resetExamples", () => {
+  it("returns defaults when current list is empty", () => {
+    const result = resetExamples([]);
+    expect(result).toHaveLength(DEFAULT_RUNBOOKS.length);
+    expect(result).toEqual(DEFAULT_RUNBOOKS);
   });
 
-  it("does not include custom runbooks in missing defaults", () => {
+  it("replaces old examples with fresh defaults", () => {
+    const modified: Runbook = {
+      ...DEFAULT_RUNBOOKS[0],
+      name: "Modified Name",
+    };
+    const result = resetExamples([modified]);
+    expect(result).toHaveLength(DEFAULT_RUNBOOKS.length);
+    const first = result.find((r: Runbook) => r.id === DEFAULT_RUNBOOKS[0].id);
+    expect(first?.name).toBe(DEFAULT_RUNBOOKS[0].name);
+  });
+
+  it("preserves custom runbooks alongside fresh defaults", () => {
     const custom: Runbook = {
       id: "custom-1",
       name: "My Custom Runbook",
@@ -86,18 +101,23 @@ describe("getMissingDefaults", () => {
       createdAt: "2026-01-01T00:00:00Z",
       updatedAt: "2026-01-01T00:00:00Z",
     };
-    const missing = getMissingDefaults([...DEFAULT_RUNBOOKS, custom]);
-    expect(missing).toHaveLength(0);
+    const result = resetExamples([...DEFAULT_RUNBOOKS, custom]);
+    expect(result).toHaveLength(DEFAULT_RUNBOOKS.length + 1);
+    expect(result.find((r: Runbook) => r.id === "custom-1")).toBeTruthy();
   });
 
-  it("returns defaults missing by id even if runbook content changed", () => {
-    // A runbook with default id but different content still counts as "present"
-    const modified: Runbook = {
-      ...DEFAULT_RUNBOOKS[0],
-      name: "Modified Name",
+  it("removes stale examples not in current defaults", () => {
+    const stale: Runbook = {
+      id: "example-99",
+      name: "Old Example",
+      description: "No longer a default",
+      commands: ["docker version"],
+      tags: [],
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-01T00:00:00Z",
     };
-    const missing = getMissingDefaults([modified]);
-    const missingIds = missing.map((r) => r.id);
-    expect(missingIds).not.toContain(DEFAULT_RUNBOOKS[0].id);
+    const result = resetExamples([stale]);
+    expect(result.find((r: Runbook) => r.id === "example-99")).toBeUndefined();
+    expect(result).toHaveLength(DEFAULT_RUNBOOKS.length);
   });
 });
