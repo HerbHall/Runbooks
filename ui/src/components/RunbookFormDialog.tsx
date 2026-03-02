@@ -22,6 +22,7 @@ import { useRunbooks } from "../context/RunbookContext";
 import { useCategories } from "../context/CategoryContext";
 import { ICON_LABELS } from "../category-defaults";
 import { CommandEditor } from "./CommandEditor";
+import { useDockerResources } from "../hooks/useDockerResources";
 import {
   DOCKER_COMMANDS,
   ALL_COMMANDS,
@@ -88,6 +89,7 @@ interface RunbookFormDialogProps {
 export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogProps) {
   const { runbooks, addRunbook, updateRunbook } = useRunbooks();
   const { categories } = useCategories();
+  const dockerResources = useDockerResources();
   const isEdit = Boolean(runbook);
 
   const [name, setName] = useState("");
@@ -197,7 +199,7 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
               Commands (one per line) *
             </Typography>
-            <CommandEditor value={commands} onChange={setCommands} />
+            <CommandEditor value={commands} onChange={setCommands} suggestions={dockerResources} />
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
               Paste commands directly from terminals or docs. The &quot;docker&quot; prefix is optional.
             </Typography>
