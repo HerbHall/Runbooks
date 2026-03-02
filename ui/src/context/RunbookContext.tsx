@@ -1,12 +1,17 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
 import type { Runbook } from "../types";
 import { loadRunbooks, saveRunbooks, resetExamples, loadPreference, savePreference, DEFAULT_RUNBOOKS } from "../storage";
 
 interface RunbookContextValue {
   runbooks: Runbook[];
+  allRunbooks: Runbook[];
+  trashedRunbooks: Runbook[];
   addRunbook: (data: Omit<Runbook, "id" | "createdAt" | "updatedAt">) => void;
   updateRunbook: (id: string, updates: Partial<Omit<Runbook, "id" | "createdAt">>) => void;
   deleteRunbook: (id: string) => void;
+  restoreRunbook: (id: string) => void;
+  permanentDeleteRunbook: (id: string) => void;
+  emptyTrash: () => void;
   togglePin: (id: string) => void;
   replaceAll: (runbooks: Runbook[]) => void;
   showExamples: boolean;
@@ -80,7 +85,37 @@ export function RunbookProvider({ children }: { children: ReactNode }) {
 
   const deleteRunbook = useCallback((id: string) => {
     setRunbooks((prev) => {
+      const next = prev.map((r) =>
+        r.id === id ? { ...r, deletedAt: new Date().toISOString() } : r,
+      );
+      saveRunbooks(next);
+      return next;
+    });
+  }, []);
+
+  const restoreRunbook = useCallback((id: string) => {
+    setRunbooks((prev) => {
+      const next = prev.map((r) => {
+        if (r.id !== id) return r;
+        const { deletedAt, ...rest } = r;
+        return rest;
+      });
+      saveRunbooks(next);
+      return next;
+    });
+  }, []);
+
+  const permanentDeleteRunbook = useCallback((id: string) => {
+    setRunbooks((prev) => {
       const next = prev.filter((r) => r.id !== id);
+      saveRunbooks(next);
+      return next;
+    });
+  }, []);
+
+  const emptyTrash = useCallback(() => {
+    setRunbooks((prev) => {
+      const next = prev.filter((r) => !r.deletedAt);
       saveRunbooks(next);
       return next;
     });
@@ -101,8 +136,18 @@ export function RunbookProvider({ children }: { children: ReactNode }) {
     setRunbooks(imported);
   }, []);
 
+  const activeRunbooks = useMemo(
+    () => runbooks.filter((r) => !r.deletedAt),
+    [runbooks],
+  );
+
+  const trashedRunbooks = useMemo(
+    () => runbooks.filter((r) => !!r.deletedAt),
+    [runbooks],
+  );
+
   return (
-    <RunbookContext.Provider value={{ runbooks, addRunbook, updateRunbook, deleteRunbook, togglePin, replaceAll, showExamples, setShowExamples, resetExamplesToDefaults }}>
+    <RunbookContext.Provider value={{ runbooks: activeRunbooks, allRunbooks: runbooks, trashedRunbooks, addRunbook, updateRunbook, deleteRunbook, restoreRunbook, permanentDeleteRunbook, emptyTrash, togglePin, replaceAll, showExamples, setShowExamples, resetExamplesToDefaults }}>
       {children}
     </RunbookContext.Provider>
   );
