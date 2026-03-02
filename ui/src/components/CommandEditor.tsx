@@ -1,7 +1,31 @@
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Editor from "react-simple-code-editor";
-import { Box, FormHelperText, useTheme } from "@mui/material";
+import {
+  Box,
+  FormHelperText,
+  useTheme,
+  Paper,
+  MenuList,
+  MenuItem,
+  Typography,
+  Popper,
+  ClickAwayListener,
+} from "@mui/material";
 import { ALL_COMMANDS, MANAGEMENT_COMMANDS, DOCKER_COMMANDS } from "../docker-commands";
 import { VARIABLE_REGEX, escapeHtml } from "../utils/variables";
+import type { DockerResource } from "../hooks/useDockerResources";
+
+/** Docker CLI commands that typically take a container name/ID as an argument */
+const CONTAINER_COMMANDS = new Set([
+  "exec", "start", "stop", "restart", "kill", "rm", "logs",
+  "inspect", "attach", "commit", "cp", "diff", "export",
+  "port", "rename", "top", "update", "wait",
+]);
+
+/** Docker CLI commands that typically take an image name as an argument */
+const IMAGE_COMMANDS = new Set([
+  "run", "pull", "push", "tag", "rmi", "save", "load", "history",
+]);
 
 /** Regex-based Docker CLI syntax highlighter */
 function highlightDocker(code: string): string {
@@ -74,15 +98,90 @@ function highlightDocker(code: string): string {
     );
 }
 
+/**
+ * Determine what type of Docker resource to suggest based on the
+ * current line's command context.
+ */
+function getSuggestionType(line: string): "container" | "image" | null {
+  const tokens = line.trim().split(/\s+/);
+  let i = 0;
+  if (tokens[i]?.toLowerCase() === "docker") i++;
+
+  const cmd = tokens[i]?.toLowerCase();
+  if (!cmd) return null;
+
+  if (CONTAINER_COMMANDS.has(cmd)) return "container";
+  if (IMAGE_COMMANDS.has(cmd)) return "image";
+
+  // Management commands: "container <sub>" or "image <sub>"
+  if (cmd === "container") return "container";
+  if (cmd === "image") return "image";
+
+  return null;
+}
+
 interface CommandEditorProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit?: () => void;
+  suggestions?: DockerResource[];
 }
 
-export function CommandEditor({ value, onChange, onSubmit }: CommandEditorProps) {
+export function CommandEditor({ value, onChange, onSubmit, suggestions }: CommandEditorProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+
+  // Use state for the anchor element so it can be read during render
+  // without violating the React Compiler refs-during-render rule.
+  const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null);
+  const editorRefCallback = useCallback((node: HTMLDivElement | null) => {
+    setAnchorEl(node);
+  }, []);
+
+  // Track whether the user dismissed the dropdown (Escape or click-away).
+  const [dismissed, setDismissed] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Reset dismissed state when the user types (value changes)
+  useEffect(() => {
+    setDismissed(false);
+    setSelectedIndex(0);
+  }, [value]);
+
+  // Derive filtered suggestions from value + suggestions (pure computation)
+  const filteredSuggestions = useMemo<DockerResource[]>(() => {
+    if (!suggestions || suggestions.length === 0) return [];
+
+    const lines = value.split("\n");
+    const lastLine = lines[lines.length - 1] ?? "";
+    const tokens = lastLine.trim().split(/\s+/);
+    const lastToken = tokens[tokens.length - 1] ?? "";
+
+    const type = getSuggestionType(lastLine);
+    if (!type || tokens.length < 2 || lastToken.length === 0) return [];
+
+    return suggestions
+      .filter((s) => s.type === type && s.name.toLowerCase().includes(lastToken.toLowerCase()))
+      .slice(0, 8);
+  }, [value, suggestions]);
+
+  const showSuggestions = filteredSuggestions.length > 0 && !dismissed;
+
+  // Accept a suggestion by replacing the last token on the current line
+  const acceptSuggestion = useCallback(
+    (name: string) => {
+      const lines = value.split("\n");
+      const lastLine = lines[lines.length - 1] ?? "";
+      const tokens = lastLine.trim().split(/\s+/);
+
+      tokens[tokens.length - 1] = name;
+      lines[lines.length - 1] = tokens.join(" ");
+
+      onChange(lines.join("\n"));
+      setDismissed(true);
+    },
+    [value, onChange],
+  );
 
   const cssVars = {
     "--docker-command": isDark ? "#6cb6ff" : "#0550ae",
@@ -97,6 +196,7 @@ export function CommandEditor({ value, onChange, onSubmit }: CommandEditorProps)
   return (
     <Box sx={cssVars}>
       <Box
+        ref={editorRefCallback}
         sx={{
           border: 1,
           borderColor: "divider",
@@ -116,6 +216,30 @@ export function CommandEditor({ value, onChange, onSubmit }: CommandEditorProps)
           highlight={highlightDocker}
           padding={12}
           onKeyDown={(e) => {
+            if (showSuggestions && filteredSuggestions.length > 0) {
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setSelectedIndex((prev) =>
+                  Math.min(prev + 1, filteredSuggestions.length - 1),
+                );
+                return;
+              }
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setSelectedIndex((prev) => Math.max(prev - 1, 0));
+                return;
+              }
+              if (e.key === "Tab" || e.key === "Enter") {
+                e.preventDefault();
+                acceptSuggestion(filteredSuggestions[selectedIndex].name);
+                return;
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setDismissed(true);
+                return;
+              }
+            }
             if (e.ctrlKey && e.key === "Enter" && onSubmit) {
               e.preventDefault();
               onSubmit();
@@ -132,6 +256,42 @@ export function CommandEditor({ value, onChange, onSubmit }: CommandEditorProps)
           textareaClassName="command-editor-textarea"
         />
       </Box>
+      {showSuggestions && anchorEl != null && (
+        <ClickAwayListener onClickAway={() => setDismissed(true)}>
+          <Popper
+            open={showSuggestions}
+            anchorEl={anchorEl}
+            placement="bottom-start"
+            style={{ zIndex: 1301, width: anchorEl.clientWidth }}
+          >
+            <Paper elevation={8} sx={{ maxHeight: 200, overflow: "auto" }}>
+              <MenuList dense>
+                {filteredSuggestions.map((s, i) => (
+                  <MenuItem
+                    key={`${s.type}-${s.name}`}
+                    selected={i === selectedIndex}
+                    onClick={() => acceptSuggestion(s.name)}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: "monospace", fontSize: "0.85rem" }}
+                    >
+                      {s.name}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ ml: 1 }}
+                    >
+                      {s.type}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Paper>
+          </Popper>
+        </ClickAwayListener>
+      )}
       <FormHelperText>
         &quot;docker&quot; prefix is optional. Use {"{{name}}"} for variables.
       </FormHelperText>
