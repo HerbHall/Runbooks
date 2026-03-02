@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import {
   Box, Typography, Stack, Button, IconButton, Tooltip,
-  Menu, MenuItem, Divider, ListItemIcon, ListItemText,
+  Menu, MenuItem, Divider, ListItemIcon, ListItemText, Badge,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -17,6 +17,7 @@ import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import FeedbackIcon from "@mui/icons-material/Feedback";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { RunbookList } from "./components/RunbookList";
 import { RunbookFormDialog } from "./components/RunbookFormDialog";
 import { CategoryManagementDialog } from "./components/CategoryManagementDialog";
@@ -24,6 +25,7 @@ import { GlobalVariablesDialog } from "./components/GlobalVariablesDialog";
 import { DiagnosticDialog } from "./components/DiagnosticDialog";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { GettingStartedDialog } from "./components/GettingStartedDialog";
+import { TrashDialog } from "./components/TrashDialog";
 import { useRunbooks } from "./context/RunbookContext";
 import { useCategories } from "./context/CategoryContext";
 import { useConstants } from "./context/ConstantContext";
@@ -38,7 +40,7 @@ export function useDockerDesktopClient() {
 }
 
 export default function App() {
-  const { runbooks, replaceAll } = useRunbooks();
+  const { runbooks, replaceAll, trashedRunbooks } = useRunbooks();
   const { categories, replaceAllCategories } = useCategories();
   const { constants, replaceAllConstants } = useConstants();
   const [formOpen, setFormOpen] = useState(false);
@@ -48,6 +50,7 @@ export default function App() {
   const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
   const [helpAnchor, setHelpAnchor] = useState<null | HTMLElement>(null);
   const [diagnosticType, setDiagnosticType] = useState<"bug" | "feature" | null>(null);
+  const [trashOpen, setTrashOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -116,6 +119,13 @@ export default function App() {
           <Button size="small" startIcon={<UploadIcon />} onClick={handleImportClick}>
             Import
           </Button>
+          <Tooltip title="Trash">
+            <IconButton size="small" onClick={() => setTrashOpen(true)}>
+              <Badge badgeContent={trashedRunbooks.length} color="error" max={99}>
+                <DeleteOutlineIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Help & Feedback">
             <IconButton size="small" onClick={(e) => setHelpAnchor(e.currentTarget)}>
               <HelpOutlineIcon />
@@ -203,6 +213,7 @@ export default function App() {
       <GlobalVariablesDialog open={variablesDialogOpen} onClose={() => setVariablesDialogOpen(false)} />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <GettingStartedDialog open={gettingStartedOpen} onClose={() => setGettingStartedOpen(false)} />
+      <TrashDialog open={trashOpen} onClose={() => setTrashOpen(false)} />
       <DiagnosticDialog
         open={diagnosticType !== null}
         onClose={() => setDiagnosticType(null)}

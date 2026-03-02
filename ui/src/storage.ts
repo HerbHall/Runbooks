@@ -101,11 +101,23 @@ export const DEFAULT_RUNBOOKS: Runbook[] = [
   },
 ];
 
+export function purgeExpiredTrash(runbooks: Runbook[], days: number = 30): Runbook[] {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  return runbooks.filter(
+    (r) => !r.deletedAt || new Date(r.deletedAt).getTime() > cutoff,
+  );
+}
+
 export function loadRunbooks(): Runbook[] {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return DEFAULT_RUNBOOKS;
   try {
-    return JSON.parse(raw) as Runbook[];
+    const all = JSON.parse(raw) as Runbook[];
+    const purged = purgeExpiredTrash(all);
+    if (purged.length !== all.length) {
+      saveRunbooks(purged);
+    }
+    return purged;
   } catch {
     return DEFAULT_RUNBOOKS;
   }
@@ -144,11 +156,12 @@ export function saveGlobalVariables(globals: GlobalVariable[]): void {
 }
 
 export function exportRunbooks(runbooks: Runbook[], categories?: Category[], globals?: GlobalVariable[]): void {
+  const activeRunbooks = runbooks.filter((r) => !r.deletedAt);
   const exportedGlobals = (globals ?? []).map((g) => ({
     ...g,
     value: g.isSecret ? "" : g.value,
   }));
-  const payload = { runbooks, categories: categories ?? [], globals: exportedGlobals };
+  const payload = { runbooks: activeRunbooks, categories: categories ?? [], globals: exportedGlobals };
   const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);

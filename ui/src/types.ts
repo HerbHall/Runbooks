@@ -8,6 +8,7 @@ export interface Runbook {
   pinned?: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface CommandResult {
