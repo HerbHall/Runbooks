@@ -43,6 +43,8 @@ export interface Category {
 
 export type GroupMode = "none" | "tag" | "category";
 
+export type SmartFilter = "none" | "recent" | "most-used" | "failed";
+
 export interface GlobalVariable {
   id: string;
   name: string;
