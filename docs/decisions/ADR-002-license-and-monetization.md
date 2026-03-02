@@ -20,6 +20,7 @@ Herb wanted to open-source the extension while retaining the option to accept do
 **MIT license.** Licenses govern what *recipients* can do with the code — they place zero restrictions on how the *author* funds development. MIT is the simplest permissive license and maximizes adoption potential.
 
 Donation/sponsorship channels are fully compatible:
+
 - GitHub Sponsors
 - Ko-fi
 - Buy Me a Coffee
