@@ -19,6 +19,10 @@ install-extension: build-extension ## Install the extension
 update-extension: build-extension ## Update the extension
 	docker extension update $(IMAGE):$(TAG)
 
+reinstall-extension: build-extension ## Build, remove old, and install fresh
+	-docker extension rm $(IMAGE):$(TAG) 2>/dev/null
+	echo "y" | docker extension install $(IMAGE):$(TAG)
+
 remove-extension: ## Remove the extension
 	docker extension rm $(IMAGE):$(TAG)
 
