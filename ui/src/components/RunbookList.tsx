@@ -27,8 +27,11 @@ import DensitySmallIcon from "@mui/icons-material/DensitySmall";
 import { useRunbooks } from "../context/RunbookContext";
 import { useCategories } from "../context/CategoryContext";
 import { loadPreference, savePreference } from "../storage";
-import { getLastRun } from "../utils/execution-history";
-import type { SortOption, LayoutMode, GroupMode, Runbook, Category } from "../types";
+import { getLastRun, getExecutionCount, didLastRunFail } from "../utils/execution-history";
+import type { SortOption, LayoutMode, GroupMode, SmartFilter, Runbook, Category } from "../types";
+import HistoryIcon from "@mui/icons-material/History";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { RunbookCard } from "./RunbookCard";
 import { CategoryBadge } from "./CategoryBadge";
 
@@ -92,6 +95,11 @@ export function RunbookList() {
     () => new Set(loadPreference<string[]>("collapsedGroups", [])),
   );
   const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
+  const [smartFilter, setSmartFilter] = useState<SmartFilter>("none");
+
+  const toggleSmartFilter = (filter: SmartFilter) => {
+    setSmartFilter((prev) => (prev === filter ? "none" : filter));
+  };
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -105,10 +113,36 @@ export function RunbookList() {
     return runbooks.filter((r) => !r.id.startsWith("example-"));
   }, [runbooks, showExamples]);
 
+  const smartFiltered = useMemo(() => {
+    if (smartFilter === "none") return visibleRunbooks;
+
+    if (smartFilter === "recent") {
+      return visibleRunbooks
+        .filter((r) => getLastRun(r.id) !== null)
+        .sort((a, b) => {
+          const aLast = getLastRun(a.id)!;
+          const bLast = getLastRun(b.id)!;
+          return bLast.timestamp.localeCompare(aLast.timestamp);
+        });
+    }
+
+    if (smartFilter === "most-used") {
+      return visibleRunbooks
+        .filter((r) => getExecutionCount(r.id) > 0)
+        .sort((a, b) => getExecutionCount(b.id) - getExecutionCount(a.id));
+    }
+
+    if (smartFilter === "failed") {
+      return visibleRunbooks.filter((r) => didLastRunFail(r.id));
+    }
+
+    return visibleRunbooks;
+  }, [visibleRunbooks, smartFilter]);
+
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return visibleRunbooks;
-    return visibleRunbooks.filter(
+    if (!q) return smartFiltered;
+    return smartFiltered.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         r.description.toLowerCase().includes(q) ||
@@ -116,7 +150,7 @@ export function RunbookList() {
         r.commands.some((c) => c.toLowerCase().includes(q)) ||
         (r.categoryId && categoryMap.get(r.categoryId)?.name.toLowerCase().includes(q)),
     );
-  }, [visibleRunbooks, searchQuery, categoryMap]);
+  }, [smartFiltered, searchQuery, categoryMap]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -382,6 +416,39 @@ export function RunbookList() {
         </Tooltip>
       </Stack>
 
+      {/* Smart filters */}
+      {visibleRunbooks.length > 0 && (
+        <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+          <Chip
+            icon={<HistoryIcon />}
+            label="Recently Used"
+            size="small"
+            variant={smartFilter === "recent" ? "filled" : "outlined"}
+            color={smartFilter === "recent" ? "primary" : "default"}
+            onClick={() => toggleSmartFilter("recent")}
+            sx={{ cursor: "pointer" }}
+          />
+          <Chip
+            icon={<TrendingUpIcon />}
+            label="Most Used"
+            size="small"
+            variant={smartFilter === "most-used" ? "filled" : "outlined"}
+            color={smartFilter === "most-used" ? "primary" : "default"}
+            onClick={() => toggleSmartFilter("most-used")}
+            sx={{ cursor: "pointer" }}
+          />
+          <Chip
+            icon={<ErrorOutlineIcon />}
+            label="Failed Last Run"
+            size="small"
+            variant={smartFilter === "failed" ? "filled" : "outlined"}
+            color={smartFilter === "failed" ? "primary" : "default"}
+            onClick={() => toggleSmartFilter("failed")}
+            sx={{ cursor: "pointer" }}
+          />
+        </Stack>
+      )}
+
       {/* Content */}
       {pinSorted.all.length === 0 ? (
         <Box
@@ -393,7 +460,9 @@ export function RunbookList() {
           }}
         >
           <Typography color="text.secondary">
-            No runbooks match your search.
+            {smartFilter !== "none"
+              ? "No runbooks match this filter."
+              : "No runbooks match your search."}
           </Typography>
         </Box>
       ) : groups ? (
