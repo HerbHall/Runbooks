@@ -7,12 +7,14 @@ import {
   Button,
   TextField,
   MenuItem,
+  Autocomplete,
   Stack,
   Box,
   Typography,
 } from "@mui/material";
 import type { Runbook } from "../types";
 import { parseVariables, substituteVariables } from "../utils/variables";
+import { useDockerResources, getResourceTypeForVariable } from "../hooks/useDockerResources";
 
 interface ParameterInputDialogProps {
   open: boolean;
@@ -23,6 +25,7 @@ interface ParameterInputDialogProps {
 
 export function ParameterInputDialog({ open, onClose, onRun, runbook }: ParameterInputDialogProps) {
   const variables = useMemo(() => parseVariables(runbook.commands), [runbook.commands]);
+  const dockerResources = useDockerResources();
 
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
@@ -105,24 +108,53 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
               Variables
             </Typography>
             <Stack spacing={2}>
-              {variables.map((v) =>
-                v.options.length > 0 ? (
-                  <TextField
-                    key={v.name}
-                    select
-                    label={v.name}
-                    value={values[v.name] ?? ""}
-                    onChange={(e) => handleChange(v.name, e.target.value)}
-                    size="small"
-                    fullWidth
-                  >
-                    {v.options.map((opt) => (
-                      <MenuItem key={opt} value={opt}>
-                        {opt}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                ) : (
+              {variables.map((v) => {
+                const resourceType = getResourceTypeForVariable(v.name);
+                const suggestions = resourceType
+                  ? dockerResources.filter((r) => r.type === resourceType).map((r) => r.name)
+                  : [];
+
+                if (v.options.length > 0) {
+                  return (
+                    <TextField
+                      key={v.name}
+                      select
+                      label={v.name}
+                      value={values[v.name] ?? ""}
+                      onChange={(e) => handleChange(v.name, e.target.value)}
+                      size="small"
+                      fullWidth
+                    >
+                      {v.options.map((opt) => (
+                        <MenuItem key={opt} value={opt}>
+                          {opt}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  );
+                }
+
+                if (suggestions.length > 0) {
+                  return (
+                    <Autocomplete
+                      key={v.name}
+                      freeSolo
+                      options={suggestions}
+                      value={values[v.name] ?? ""}
+                      onInputChange={(_e, newValue) => handleChange(v.name, newValue)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={v.name}
+                          size="small"
+                          placeholder={v.defaultValue || undefined}
+                        />
+                      )}
+                    />
+                  );
+                }
+
+                return (
                   <TextField
                     key={v.name}
                     label={v.name}
@@ -132,8 +164,8 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
                     fullWidth
                     placeholder={v.defaultValue || undefined}
                   />
-                ),
-              )}
+                );
+              })}
             </Stack>
           </Box>
         </Box>
