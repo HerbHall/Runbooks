@@ -7,6 +7,7 @@ interface RunbookContextValue {
   addRunbook: (data: Omit<Runbook, "id" | "createdAt" | "updatedAt">) => void;
   updateRunbook: (id: string, updates: Partial<Omit<Runbook, "id" | "createdAt">>) => void;
   deleteRunbook: (id: string) => void;
+  togglePin: (id: string) => void;
   replaceAll: (runbooks: Runbook[]) => void;
   restoreDefaults: () => number;
 }
@@ -55,6 +56,16 @@ export function RunbookProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const togglePin = useCallback((id: string) => {
+    setRunbooks((prev) => {
+      const next = prev.map((r) =>
+        r.id === id ? { ...r, pinned: !r.pinned, updatedAt: new Date().toISOString() } : r,
+      );
+      saveRunbooks(next);
+      return next;
+    });
+  }, []);
+
   const replaceAll = useCallback((imported: Runbook[]) => {
     saveRunbooks(imported);
     setRunbooks(imported);
@@ -73,7 +84,7 @@ export function RunbookProvider({ children }: { children: ReactNode }) {
   }, [runbooks]);
 
   return (
-    <RunbookContext.Provider value={{ runbooks, addRunbook, updateRunbook, deleteRunbook, replaceAll, restoreDefaults }}>
+    <RunbookContext.Provider value={{ runbooks, addRunbook, updateRunbook, deleteRunbook, togglePin, replaceAll, restoreDefaults }}>
       {children}
     </RunbookContext.Provider>
   );

@@ -11,6 +11,7 @@ import {
   IconButton,
   Tooltip,
   Collapse,
+  Divider,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -112,6 +113,12 @@ export function RunbookList() {
     }
   }, [filtered, sortBy]);
 
+  const pinSorted = useMemo(() => {
+    const pinned = sorted.filter((r) => r.pinned);
+    const unpinned = sorted.filter((r) => !r.pinned);
+    return { pinned, unpinned, all: [...pinned, ...unpinned] };
+  }, [sorted]);
+
   const groups = useMemo((): PrimaryGroup[] | null => {
     if (groupMode === "none") return null;
 
@@ -119,7 +126,7 @@ export function RunbookList() {
       const catGroups = new Map<string, Runbook[]>();
       const ungrouped: Runbook[] = [];
 
-      for (const r of sorted) {
+      for (const r of pinSorted.all) {
         if (r.categoryId && categoryMap.has(r.categoryId)) {
           if (!catGroups.has(r.categoryId)) catGroups.set(r.categoryId, []);
           catGroups.get(r.categoryId)!.push(r);
@@ -149,7 +156,7 @@ export function RunbookList() {
     const primaryMap = new Map<string, { display: string; items: Runbook[] }>();
     const ungrouped: Runbook[] = [];
 
-    for (const r of sorted) {
+    for (const r of pinSorted.all) {
       if (r.tags.length === 0) {
         ungrouped.push(r);
       } else {
@@ -161,12 +168,15 @@ export function RunbookList() {
       }
     }
 
-    // Within each group, sort by secondary tags then name
+    // Within each group, sort pinned first then by secondary tags then name
     const result: PrimaryGroup[] = [...primaryMap.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, { display, items }]) => ({
         tag: display,
         runbooks: items.sort((a, b) => {
+          const aPinned = a.pinned ? 0 : 1;
+          const bPinned = b.pinned ? 0 : 1;
+          if (aPinned !== bPinned) return aPinned - bPinned;
           const aSub = a.tags.slice(1).join("/");
           const bSub = b.tags.slice(1).join("/");
           return aSub.localeCompare(bSub) || a.name.localeCompare(b.name);
@@ -177,7 +187,7 @@ export function RunbookList() {
       result.push({ tag: "Ungrouped", runbooks: ungrouped });
     }
     return result;
-  }, [sorted, groupMode, categories, categoryMap]);
+  }, [pinSorted, groupMode, categories, categoryMap]);
 
   const toggleCollapse = (key: string) => {
     setCollapsed((prev) => {
@@ -233,7 +243,7 @@ export function RunbookList() {
   };
 
   const expandAllCards = () => setCollapsedCards(new Set());
-  const collapseAllCards = () => setCollapsedCards(new Set(sorted.map((r) => r.id)));
+  const collapseAllCards = () => setCollapsedCards(new Set(pinSorted.all.map((r) => r.id)));
 
   const totalInGroup = (g: PrimaryGroup) => g.runbooks.length;
 
@@ -335,7 +345,7 @@ export function RunbookList() {
       </Stack>
 
       {/* Content */}
-      {sorted.length === 0 ? (
+      {pinSorted.all.length === 0 ? (
         <Box
           sx={{
             flex: 1,
@@ -392,8 +402,20 @@ export function RunbookList() {
           </Stack>
         </Box>
       ) : (
-        <Box sx={{ flex: 1, overflow: "auto", ...layoutSx }}>
-          {sorted.map(renderCard)}
+        <Box sx={{ flex: 1, overflow: "auto" }}>
+          {pinSorted.pinned.length > 0 && (
+            <>
+              <Divider textAlign="left" sx={{ mb: 0.75 }}>
+                <Chip label="Pinned" size="small" color="warning" variant="outlined" />
+              </Divider>
+              <Box sx={{ ...layoutSx, mb: 1 }}>
+                {pinSorted.pinned.map(renderCard)}
+              </Box>
+            </>
+          )}
+          <Box sx={layoutSx}>
+            {pinSorted.unpinned.map(renderCard)}
+          </Box>
         </Box>
       )}
     </Box>
