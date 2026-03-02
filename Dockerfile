@@ -1,10 +1,11 @@
 # Build the React UI
 FROM --platform=$BUILDPLATFORM node:22-alpine AS ui-builder
+ARG VERSION=0.2.0
 WORKDIR /app
 COPY ui/package.json ui/package-lock.json* ./
 RUN npm ci
 COPY ui/ ./
-RUN npm run build
+RUN npm version "$VERSION" --no-git-tag-version --allow-same-version && npm run build
 
 # Final extension image
 FROM alpine:3.19
