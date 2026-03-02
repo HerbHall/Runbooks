@@ -102,7 +102,7 @@ describe("RunbookList", () => {
   it("search filters runbooks by name", () => {
     seedRunbooks(testRunbooks);
     renderList();
-    const searchInput = screen.getByPlaceholderText("Search runbooks...");
+    const searchInput = screen.getByPlaceholderText("Search runbooks... (/)");
     fireEvent.change(searchInput, { target: { value: "Alpha" } });
     expect(screen.getByText("Alpha Runbook")).toBeInTheDocument();
     expect(screen.queryByText("Beta Runbook")).not.toBeInTheDocument();
@@ -112,7 +112,7 @@ describe("RunbookList", () => {
   it("search filters runbooks by tag", () => {
     seedRunbooks(testRunbooks);
     renderList();
-    const searchInput = screen.getByPlaceholderText("Search runbooks...");
+    const searchInput = screen.getByPlaceholderText("Search runbooks... (/)");
     fireEvent.change(searchInput, { target: { value: "cleanup" } });
     expect(screen.getByText("Beta Runbook")).toBeInTheDocument();
     expect(screen.queryByText("Alpha Runbook")).not.toBeInTheDocument();
@@ -121,7 +121,7 @@ describe("RunbookList", () => {
   it("shows no-match message when search yields nothing", () => {
     seedRunbooks(testRunbooks);
     renderList();
-    const searchInput = screen.getByPlaceholderText("Search runbooks...");
+    const searchInput = screen.getByPlaceholderText("Search runbooks... (/)");
     fireEvent.change(searchInput, { target: { value: "zzz-nonexistent" } });
     expect(screen.getByText(/No runbooks match/)).toBeInTheDocument();
   });

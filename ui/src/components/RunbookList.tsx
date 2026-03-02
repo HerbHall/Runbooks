@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -57,6 +57,23 @@ export function RunbookList() {
   const { runbooks } = useRunbooks();
   const { categories } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = document.activeElement?.tagName;
+      if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA") {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+      if (e.key === "Escape" && tag === "INPUT") {
+        searchRef.current?.blur();
+        setSearchQuery("");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
   const [sortBy, setSortBy] = useState<SortOption>(
     () => loadPreference<SortOption>("sortBy", "name-asc"),
   );
@@ -294,9 +311,10 @@ export function RunbookList() {
         <Tooltip title="Filter by name, description, tags, or commands" placement="bottom">
           <TextField
             size="small"
-            placeholder="Search runbooks..."
+            placeholder="Search runbooks... (/)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            inputRef={searchRef}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

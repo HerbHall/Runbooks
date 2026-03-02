@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import {
   Box, Typography, Stack, Button, IconButton, Tooltip,
@@ -39,6 +39,17 @@ export default function App() {
   const [helpAnchor, setHelpAnchor] = useState<null | HTMLElement>(null);
   const [diagnosticType, setDiagnosticType] = useState<"bug" | "feature" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "n") {
+        e.preventDefault();
+        setFormOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const handleExport = () => {
     exportRunbooks(runbooks, categories);
@@ -128,9 +139,11 @@ export default function App() {
               <ListItemText>Support this Project</ListItemText>
             </MenuItem>
           </Menu>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setFormOpen(true)}>
-            New Runbook
-          </Button>
+          <Tooltip title="Create a new runbook (Ctrl+N)">
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setFormOpen(true)}>
+              New Runbook
+            </Button>
+          </Tooltip>
         </Stack>
       </Stack>
 
