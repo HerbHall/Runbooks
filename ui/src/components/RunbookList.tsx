@@ -27,6 +27,7 @@ import DensitySmallIcon from "@mui/icons-material/DensitySmall";
 import { useRunbooks } from "../context/RunbookContext";
 import { useCategories } from "../context/CategoryContext";
 import { loadPreference, savePreference } from "../storage";
+import { getLastRun } from "../utils/execution-history";
 import type { SortOption, LayoutMode, GroupMode, Runbook, Category } from "../types";
 import { RunbookCard } from "./RunbookCard";
 import { CategoryBadge } from "./CategoryBadge";
@@ -108,6 +109,15 @@ export function RunbookList() {
         return arr.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       case "modified-asc":
         return arr.sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+      case "last-run-desc":
+        return arr.sort((a, b) => {
+          const aLast = getLastRun(a.id);
+          const bLast = getLastRun(b.id);
+          if (aLast == null && bLast == null) return 0;
+          if (aLast == null) return 1;
+          if (bLast == null) return -1;
+          return bLast.timestamp.localeCompare(aLast.timestamp);
+        });
       default:
         return arr;
     }
@@ -310,6 +320,7 @@ export function RunbookList() {
           <MenuItem value="created-asc">Oldest</MenuItem>
           <MenuItem value="modified-desc">Recently Modified</MenuItem>
           <MenuItem value="modified-asc">Least Recently Modified</MenuItem>
+          <MenuItem value="last-run-desc">Recently Executed</MenuItem>
         </Select>
         <Tooltip title={layoutMode === "grid" ? "Switch to list view" : "Switch to grid view"} placement="bottom">
           <IconButton size="small" onClick={handleLayoutToggle}>

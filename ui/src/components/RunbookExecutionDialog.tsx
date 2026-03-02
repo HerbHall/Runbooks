@@ -20,6 +20,7 @@ import type { ExecProcess } from "@docker/extension-api-client-types/dist/v1/exe
 import type { Runbook, CommandResult, ExecutionStatus } from "../types";
 import { useDockerDesktopClient } from "../App";
 import { getDestructiveWarnings, type DestructiveWarning } from "../utils/destructive-commands";
+import { recordExecution } from "../utils/execution-history";
 import { hasVariables } from "../utils/variables";
 import { ParameterInputDialog } from "./ParameterInputDialog";
 
@@ -153,6 +154,9 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
           stopTimer();
           setCurrentIndex(i);
           setStatus("failed");
+          const totalDuration = collected.reduce((sum, r) => sum + r.duration, 0);
+          const allOutput = collected.map((r) => r.stdout).join("\n");
+          recordExecution(runbook.id, result.exitCode, totalDuration, commands.length, allOutput);
           ddClient.desktopUI.toast.error(`Runbook failed: ${runbook.name}`);
           return;
         }
@@ -164,6 +168,9 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
         setStatus("idle");
       } else {
         setStatus("completed");
+        const totalDuration = collected.reduce((sum, r) => sum + r.duration, 0);
+        const allOutput = collected.map((r) => r.stdout).join("\n");
+        recordExecution(runbook.id, 0, totalDuration, commands.length, allOutput);
         ddClient.desktopUI.toast.success(`Runbook completed: ${runbook.name}`);
       }
       setCurrentIndex(-1);
