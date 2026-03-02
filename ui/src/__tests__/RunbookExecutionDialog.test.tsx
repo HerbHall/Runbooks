@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import type { Runbook } from "../types";
 import { RunbookExecutionDialog } from "../components/RunbookExecutionDialog";
 
@@ -102,108 +102,185 @@ beforeEach(() => {
 });
 
 describe("RunbookExecutionDialog", () => {
-  it("renders dialog with runbook name", async () => {
-    render(
-      <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
-    );
-    await waitFor(() => {
-      expect(screen.getByText(/Test Execution/)).toBeInTheDocument();
+  describe("Preview", () => {
+    it("shows preview when dialog opens", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText(/Preview: Test Execution/)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/Review the commands that will be executed/)).toBeInTheDocument();
+      expect(screen.getByText(/\$ docker ps/)).toBeInTheDocument();
     });
-  });
 
-  it("shows commands in the dialog", async () => {
-    render(
-      <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={multiCommandRunbook} />,
-    );
-    await waitFor(() => {
+    it("shows Run, Copy, Cancel buttons in preview", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      expect(screen.getByText("Copy")).toBeInTheDocument();
+      expect(screen.getByText("Cancel")).toBeInTheDocument();
+    });
+
+    it("shows all commands in preview for multi-command runbook", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={multiCommandRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText(/Preview: Multi-Command/)).toBeInTheDocument();
+      });
       expect(screen.getByText(/\$ docker ps/)).toBeInTheDocument();
       expect(screen.getByText(/\$ docker images/)).toBeInTheDocument();
     });
-  });
 
-  it("starts execution automatically when opened", async () => {
-    render(
-      <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
-    );
-    // Should show running state (the title contains "Running:")
-    await waitFor(() => {
-      expect(screen.getByText(/Running:/)).toBeInTheDocument();
-    });
-  });
-
-  it("shows streaming output during execution", async () => {
-    render(
-      <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
-    );
-
-    // Wait for execution to start and streaming to be set up
-    await waitFor(() => {
-      expect(streamCallbacks.onOutput).toBeDefined();
-    });
-
-    // Simulate streaming output (wrap in act to flush state updates)
-    act(() => {
-      streamCallbacks.onOutput?.({ stdout: "container-list-output\n" });
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/container-list-output/)).toBeInTheDocument();
-    });
-  });
-
-  it("records execution history on completion", async () => {
-    render(
-      <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
-    );
-
-    await waitFor(() => {
-      expect(streamCallbacks.onClose).toBeDefined();
-    });
-
-    // Complete the execution
-    streamCallbacks.onClose?.(0);
-
-    await waitFor(() => {
-      expect(mockRecordExecution).toHaveBeenCalledWith(
-        "exec-test-1",
-        0,
-        expect.any(Number),
-        1,
-        expect.any(String),
+    it("clicking Cancel in preview closes dialog", async () => {
+      const onClose = vi.fn();
+      render(
+        <RunbookExecutionDialog open={true} onClose={onClose} runbook={simpleRunbook} />,
       );
+      await waitFor(() => {
+        expect(screen.getByText("Cancel")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Cancel"));
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it("clicking Run in preview starts execution", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+      await waitFor(() => {
+        expect(screen.getByText(/Running:/)).toBeInTheDocument();
+      });
     });
   });
 
-  it("shows success message on completion", async () => {
-    render(
-      <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
-    );
-
-    await waitFor(() => {
-      expect(streamCallbacks.onClose).toBeDefined();
+  describe("Execution (after preview)", () => {
+    it("renders dialog with runbook name in running state", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+      await waitFor(() => {
+        expect(screen.getByText(/Test Execution/)).toBeInTheDocument();
+      });
     });
 
-    streamCallbacks.onClose?.(0);
-
-    await waitFor(() => {
-      expect(screen.getByText(/All commands completed successfully/)).toBeInTheDocument();
+    it("shows commands in the running dialog", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={multiCommandRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+      await waitFor(() => {
+        expect(screen.getByText(/Running:/)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/\$ docker ps/)).toBeInTheDocument();
+      expect(screen.getByText(/\$ docker images/)).toBeInTheDocument();
     });
-  });
 
-  it("shows Close button when not running", async () => {
-    render(
-      <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
-    );
+    it("shows streaming output during execution", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
 
-    await waitFor(() => {
-      expect(streamCallbacks.onClose).toBeDefined();
+      // Wait for execution to start and streaming to be set up
+      await waitFor(() => {
+        expect(streamCallbacks.onOutput).toBeDefined();
+      });
+
+      // Simulate streaming output (wrap in act to flush state updates)
+      act(() => {
+        streamCallbacks.onOutput?.({ stdout: "container-list-output\n" });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/container-list-output/)).toBeInTheDocument();
+      });
     });
 
-    // Complete execution to transition out of running state
-    streamCallbacks.onClose?.(0);
+    it("records execution history on completion", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
 
-    await waitFor(() => {
-      expect(screen.getByText("Close")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(streamCallbacks.onClose).toBeDefined();
+      });
+
+      // Complete the execution
+      streamCallbacks.onClose?.(0);
+
+      await waitFor(() => {
+        expect(mockRecordExecution).toHaveBeenCalledWith(
+          "exec-test-1",
+          0,
+          expect.any(Number),
+          1,
+          expect.any(String),
+        );
+      });
+    });
+
+    it("shows success message on completion", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+
+      await waitFor(() => {
+        expect(streamCallbacks.onClose).toBeDefined();
+      });
+
+      streamCallbacks.onClose?.(0);
+
+      await waitFor(() => {
+        expect(screen.getByText(/All commands completed successfully/)).toBeInTheDocument();
+      });
+    });
+
+    it("shows Close button when not running", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+
+      await waitFor(() => {
+        expect(streamCallbacks.onClose).toBeDefined();
+      });
+
+      // Complete execution to transition out of running state
+      streamCallbacks.onClose?.(0);
+
+      await waitFor(() => {
+        expect(screen.getByText("Close")).toBeInTheDocument();
+      });
     });
   });
 });

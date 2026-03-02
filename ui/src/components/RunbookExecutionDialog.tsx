@@ -47,6 +47,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
   const [warnings, setWarnings] = useState<DestructiveWarning[]>([]);
   const [needsParameters, setNeedsParameters] = useState(false);
   const [resolvedCommands, setResolvedCommands] = useState<string[] | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const [streamOutput, setStreamOutput] = useState("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [autoScroll, setAutoScroll] = useState(true);
@@ -189,13 +190,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
       if (hasVariables(runbook.commands)) {
         setNeedsParameters(true);
       } else {
-        const detected = getDestructiveWarnings(runbook.commands);
-        if (detected.length > 0) {
-          setWarnings(detected);
-          setNeedsConfirmation(true);
-        } else {
-          execute();
-        }
+        setShowPreview(true);
       }
     }
     return () => {
@@ -217,6 +212,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
     setCurrentIndex(-1);
     setNeedsConfirmation(false);
     setNeedsParameters(false);
+    setShowPreview(false);
     setResolvedCommands(null);
     setWarnings([]);
     setStreamOutput("");
@@ -247,16 +243,32 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
     execute();
   };
 
-  const handleParameterSubmit = (resolved: string[]) => {
-    setNeedsParameters(false);
-    setResolvedCommands(resolved);
-    const detected = getDestructiveWarnings(resolved);
+  const handlePreviewConfirm = () => {
+    setShowPreview(false);
+    const cmds = resolvedCommands ?? runbook.commands;
+    const detected = getDestructiveWarnings(cmds);
     if (detected.length > 0) {
       setWarnings(detected);
       setNeedsConfirmation(true);
     } else {
-      execute(resolved);
+      execute(cmds);
     }
+  };
+
+  const handlePreviewCopy = async () => {
+    const cmds = resolvedCommands ?? runbook.commands;
+    try {
+      await navigator.clipboard.writeText(cmds.join("\n"));
+      ddClient.desktopUI.toast.success("Commands copied to clipboard");
+    } catch {
+      ddClient.desktopUI.toast.error("Failed to copy to clipboard");
+    }
+  };
+
+  const handleParameterSubmit = (resolved: string[]) => {
+    setNeedsParameters(false);
+    setResolvedCommands(resolved);
+    setShowPreview(true);
   };
 
   if (needsParameters) {
@@ -267,6 +279,45 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
         onRun={handleParameterSubmit}
         runbook={runbook}
       />
+    );
+  }
+
+  if (showPreview) {
+    const previewCommands = resolvedCommands ?? runbook.commands;
+    return (
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
+        <DialogTitle>Preview: {runbook.name}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Review the commands that will be executed:
+          </Typography>
+          <Box
+            component="pre"
+            sx={{
+              bgcolor: "action.hover",
+              color: "text.primary",
+              p: 2,
+              borderRadius: 1,
+              fontSize: "0.85rem",
+              fontFamily: "monospace",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              overflow: "auto",
+              maxHeight: 400,
+              m: 0,
+            }}
+          >
+            {previewCommands.map((cmd) => `$ ${cmd}`).join("\n")}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handlePreviewCopy}>Copy</Button>
+          <Button onClick={handlePreviewConfirm} variant="contained" color="primary">
+            Run
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 
