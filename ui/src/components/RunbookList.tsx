@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -89,7 +89,7 @@ export function RunbookList() {
   const [collapsed, setCollapsed] = useState<Set<string>>(
     () => new Set(loadPreference<string[]>("collapsedGroups", [])),
   );
-  const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
+  const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -260,32 +260,34 @@ export function RunbookList() {
     });
   };
 
-  const toggleCardCollapse = (id: string) => {
-    setCollapsedCards((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  const toggleCardCollapse = useCallback((id: string) => {
+    setCollapsedCards((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  }, []);
 
-  const expandAllCards = () => setCollapsedCards(new Set());
-  const collapseAllCards = () => setCollapsedCards(new Set(pinSorted.all.map((r) => r.id)));
+  const expandAllCards = useCallback(() => setCollapsedCards({}), []);
+  const collapseAllCards = useCallback(() => {
+    setCollapsedCards(
+      Object.fromEntries(pinSorted.all.map((r) => [r.id, true])),
+    );
+  }, [pinSorted.all]);
 
   const totalInGroup = (g: PrimaryGroup) => g.runbooks.length;
 
   const groupLabel = groupMode === "none" ? "Group" : groupMode === "tag" ? "By Tag" : "By Category";
 
-  const renderCard = (runbook: Runbook) => (
+  const renderCard = useCallback((runbook: Runbook) => (
     <RunbookCard
       key={runbook.id}
       runbook={runbook}
       category={runbook.categoryId ? categoryMap.get(runbook.categoryId) : undefined}
-      collapsed={collapsedCards.has(runbook.id)}
+      collapsed={!!collapsedCards[runbook.id]}
       onToggleCollapse={() => toggleCardCollapse(runbook.id)}
       compact={compact}
     />
-  );
+  ), [collapsedCards, categoryMap, toggleCardCollapse, compact]);
 
   if (runbooks.length === 0) {
     return (
