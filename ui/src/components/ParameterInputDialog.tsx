@@ -8,6 +8,7 @@ import {
   TextField,
   MenuItem,
   Autocomplete,
+  Chip,
   Stack,
   Box,
   Typography,
@@ -15,6 +16,7 @@ import {
 import type { Runbook } from "../types";
 import { parseVariables, substituteVariables } from "../utils/variables";
 import { useDockerResources, getResourceTypeForVariable } from "../hooks/useDockerResources";
+import { useConstants } from "../context/ConstantContext";
 
 interface ParameterInputDialogProps {
   open: boolean;
@@ -26,24 +28,24 @@ interface ParameterInputDialogProps {
 export function ParameterInputDialog({ open, onClose, onRun, runbook }: ParameterInputDialogProps) {
   const variables = useMemo(() => parseVariables(runbook.commands), [runbook.commands]);
   const dockerResources = useDockerResources();
+  const { getConstant } = useConstants();
 
-  const [values, setValues] = useState<Record<string, string>>(() => {
+  const initValues = useCallback(() => {
     const init: Record<string, string> = {};
     for (const v of parseVariables(runbook.commands)) {
-      init[v.name] = v.defaultValue;
+      const constant = getConstant(v.name);
+      init[v.name] = constant ? constant.value : v.defaultValue;
     }
     return init;
-  });
+  }, [runbook.commands, getConstant]);
+
+  const [values, setValues] = useState<Record<string, string>>(initValues);
 
   // Re-initialize values when dialog opens with different runbook
   const [lastRunbookId, setLastRunbookId] = useState(runbook.id);
   if (runbook.id !== lastRunbookId) {
     setLastRunbookId(runbook.id);
-    const init: Record<string, string> = {};
-    for (const v of variables) {
-      init[v.name] = v.defaultValue;
-    }
-    setValues(init);
+    setValues(initValues());
   }
 
   const preview = useMemo(
@@ -109,6 +111,28 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
             </Typography>
             <Stack spacing={2}>
               {variables.map((v) => {
+                const constant = getConstant(v.name);
+
+                if (constant) {
+                  return (
+                    <Stack key={v.name} direction="row" alignItems="center" spacing={1}>
+                      <TextField
+                        label={v.name}
+                        value={constant.isSecret ? "•••••••" : constant.value}
+                        size="small"
+                        fullWidth
+                        disabled
+                      />
+                      <Chip
+                        label={constant.isSecret ? "Secret" : "Global"}
+                        size="small"
+                        color={constant.isSecret ? "error" : "info"}
+                        variant="outlined"
+                      />
+                    </Stack>
+                  );
+                }
+
                 const resourceType = getResourceTypeForVariable(v.name);
                 const suggestions = resourceType
                   ? dockerResources.filter((r) => r.type === resourceType).map((r) => r.name)
