@@ -15,7 +15,10 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import type { Runbook, Category } from "../types";
+import { useRunbooks } from "../context/RunbookContext";
 import { VARIABLE_REGEX, escapeHtml } from "../utils/variables";
 import { RunbookFormDialog } from "./RunbookFormDialog";
 import { RunbookDeleteDialog } from "./RunbookDeleteDialog";
@@ -31,6 +34,7 @@ interface RunbookCardProps {
 }
 
 export function RunbookCard({ runbook, category, collapsed = false, onToggleCollapse, compact = false }: RunbookCardProps) {
+  const { togglePin } = useRunbooks();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [execOpen, setExecOpen] = useState(false);
@@ -57,6 +61,14 @@ export function RunbookCard({ runbook, category, collapsed = false, onToggleColl
               <Chip key={tag} label={tag} size="small" />
             ))}
             <Box sx={{ flex: 1 }} />
+            <IconButton
+              size="small"
+              title={runbook.pinned ? "Unpin" : "Pin"}
+              onClick={() => togglePin(runbook.id)}
+              color={runbook.pinned ? "warning" : "default"}
+            >
+              {runbook.pinned ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+            </IconButton>
             <IconButton size="small" color="primary" title="Run" onClick={() => setExecOpen(true)}>
               <PlayArrowIcon fontSize="small" />
             </IconButton>

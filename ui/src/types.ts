@@ -5,6 +5,7 @@ export interface Runbook {
   commands: string[];
   tags: string[];
   categoryId?: string;
+  pinned?: boolean;
   createdAt: string;
   updatedAt: string;
 }
