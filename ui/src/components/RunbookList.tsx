@@ -42,6 +42,7 @@ const getLayoutSx = (mode: LayoutMode, compact: boolean) => {
     gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
     gap,
     alignContent: "start",
+    alignItems: "start",
   };
 };
 

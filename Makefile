@@ -1,6 +1,6 @@
 IMAGE ?= herbhall/runbooks
 TAG ?= latest
-VERSION ?= $(shell node -p "require('./ui/package.json').version" 2>/dev/null || echo "0.1.0")
+VERSION ?= $(shell node -p "require('./ui/package.json').version" 2>/dev/null || echo "0.2.0")
 
 BUILDER = buildx-multi-arch
 
