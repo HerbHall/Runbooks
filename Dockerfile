@@ -9,7 +9,7 @@ RUN npm run build
 # Final extension image
 FROM alpine:3.19
 
-ARG VERSION=0.1.0
+ARG VERSION=0.2.0
 
 LABEL org.opencontainers.image.title="Runbooks" \
     org.opencontainers.image.description="Saved command scripts for Docker Desktop" \
