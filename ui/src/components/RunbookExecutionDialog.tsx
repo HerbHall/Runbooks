@@ -224,11 +224,23 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
     onClose();
   };
 
-  const handleAbort = () => {
+  const handleAbort = useCallback(() => {
     abortRef.current = true;
     processRef.current?.close();
     processRef.current = null;
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status !== "running") return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "c") {
+        e.preventDefault();
+        handleAbort();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [status, handleAbort]);
 
   const handleConfirm = () => {
     setNeedsConfirmation(false);

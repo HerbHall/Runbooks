@@ -77,9 +77,10 @@ function highlightDocker(code: string): string {
 interface CommandEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onSubmit?: () => void;
 }
 
-export function CommandEditor({ value, onChange }: CommandEditorProps) {
+export function CommandEditor({ value, onChange, onSubmit }: CommandEditorProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
@@ -114,6 +115,12 @@ export function CommandEditor({ value, onChange }: CommandEditorProps) {
           onValueChange={onChange}
           highlight={highlightDocker}
           padding={12}
+          onKeyDown={(e) => {
+            if (e.ctrlKey && e.key === "Enter" && onSubmit) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
           style={{
             fontFamily: '"Roboto Mono", "Consolas", monospace',
             fontSize: 13,
