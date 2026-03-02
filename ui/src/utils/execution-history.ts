@@ -43,3 +43,12 @@ export function formatTimeAgo(timestamp: string): string {
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
 }
+
+export function getExecutionCount(runbookId: string): number {
+  return getHistory(runbookId).length;
+}
+
+export function didLastRunFail(runbookId: string): boolean {
+  const last = getLastRun(runbookId);
+  return last !== null && last.exitCode !== 0;
+}
