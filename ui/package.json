@@ -11,7 +11,7 @@
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.2.4",
     "react-simple-code-editor": "^0.14.1"
   },
   "devDependencies": {
@@ -20,7 +20,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.3",
     "eslint": "^9.39.3",
     "eslint-plugin-react-hooks": "^7.0.1",
