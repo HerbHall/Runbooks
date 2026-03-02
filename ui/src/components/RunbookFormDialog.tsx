@@ -30,8 +30,6 @@ import {
 } from "../docker-commands";
 import { parseVariables } from "../utils/variables";
 
-const COMMON_TAGS = ["info", "cleanup", "dev", "production", "maintenance", "monitoring", "caution"];
-
 function validateCommands(raw: string): string[] {
   const warnings: string[] = [];
   const lines = raw.split("\n");
@@ -105,7 +103,7 @@ export function RunbookFormDialog({ open, onClose, runbook }: RunbookFormDialogP
   );
 
   const allTags = useMemo(() => {
-    const tagSet = new Set(COMMON_TAGS);
+    const tagSet = new Set<string>();
     for (const r of runbooks) {
       for (const t of r.tags) {
         tagSet.add(t);
