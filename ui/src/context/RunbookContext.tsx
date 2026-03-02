@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { Runbook } from "../types";
-import { loadRunbooks, saveRunbooks, getMissingDefaults } from "../storage";
+import { loadRunbooks, saveRunbooks, resetExamples, loadPreference, savePreference, DEFAULT_RUNBOOKS } from "../storage";
 
 interface RunbookContextValue {
   runbooks: Runbook[];
@@ -9,13 +9,43 @@ interface RunbookContextValue {
   deleteRunbook: (id: string) => void;
   togglePin: (id: string) => void;
   replaceAll: (runbooks: Runbook[]) => void;
-  restoreDefaults: () => number;
+  showExamples: boolean;
+  setShowExamples: (show: boolean) => void;
+  resetExamplesToDefaults: () => void;
 }
 
 const RunbookContext = createContext<RunbookContextValue | null>(null);
 
 export function RunbookProvider({ children }: { children: ReactNode }) {
   const [runbooks, setRunbooks] = useState<Runbook[]>(() => loadRunbooks());
+  const [showExamples, setShowExamplesState] = useState<boolean>(
+    () => loadPreference<boolean>("showExamples", true),
+  );
+
+  const setShowExamples = useCallback((show: boolean) => {
+    setShowExamplesState(show);
+    savePreference("showExamples", show);
+    if (show) {
+      // If enabling and no examples exist, add defaults
+      setRunbooks((prev) => {
+        const hasExamples = prev.some((r) => r.id.startsWith("example-"));
+        if (!hasExamples) {
+          const next = [...DEFAULT_RUNBOOKS, ...prev];
+          saveRunbooks(next);
+          return next;
+        }
+        return prev;
+      });
+    }
+  }, []);
+
+  const resetExamplesToDefaults = useCallback(() => {
+    setRunbooks((prev) => {
+      const next = resetExamples(prev);
+      saveRunbooks(next);
+      return next;
+    });
+  }, []);
 
   const addRunbook = useCallback(
     (data: Omit<Runbook, "id" | "createdAt" | "updatedAt">) => {
@@ -71,20 +101,8 @@ export function RunbookProvider({ children }: { children: ReactNode }) {
     setRunbooks(imported);
   }, []);
 
-  const restoreDefaults = useCallback((): number => {
-    const missing = getMissingDefaults(runbooks);
-    if (missing.length > 0) {
-      setRunbooks((prev) => {
-        const next = [...missing, ...prev];
-        saveRunbooks(next);
-        return next;
-      });
-    }
-    return missing.length;
-  }, [runbooks]);
-
   return (
-    <RunbookContext.Provider value={{ runbooks, addRunbook, updateRunbook, deleteRunbook, togglePin, replaceAll, restoreDefaults }}>
+    <RunbookContext.Provider value={{ runbooks, addRunbook, updateRunbook, deleteRunbook, togglePin, replaceAll, showExamples, setShowExamples, resetExamplesToDefaults }}>
       {children}
     </RunbookContext.Provider>
   );
