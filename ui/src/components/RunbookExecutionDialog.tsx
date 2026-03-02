@@ -23,6 +23,7 @@ import { getDestructiveWarnings, type DestructiveWarning } from "../utils/destru
 import { recordExecution } from "../utils/execution-history";
 import { getNavigationActions, type NavigationTarget } from "../utils/output-links";
 import { hasVariables } from "../utils/variables";
+import { useConstants } from "../context/ConstantContext";
 import { ParameterInputDialog } from "./ParameterInputDialog";
 
 interface RunbookExecutionDialogProps {
@@ -39,8 +40,21 @@ function parseCommand(raw: string): string[] {
   return tokens;
 }
 
+function maskSecrets(commands: string[], secrets: { value: string }[]): string[] {
+  if (secrets.length === 0) return commands;
+  return commands.map((cmd) => {
+    let masked = cmd;
+    for (const s of secrets) {
+      if (s.value) masked = masked.replaceAll(s.value, "•••");
+    }
+    return masked;
+  });
+}
+
 export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecutionDialogProps) {
   const ddClient = useDockerDesktopClient();
+  const { constants } = useConstants();
+  const secretConstants = constants.filter((c) => c.isSecret);
   const [status, setStatus] = useState<ExecutionStatus>("idle");
   const [results, setResults] = useState<CommandResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
@@ -299,6 +313,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
 
   if (showPreview) {
     const previewCommands = resolvedCommands ?? runbook.commands;
+    const displayCommands = maskSecrets(previewCommands, secretConstants);
     return (
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
         <DialogTitle>Preview: {runbook.name}</DialogTitle>
@@ -322,7 +337,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
               m: 0,
             }}
           >
-            {previewCommands.map((cmd) => `$ ${cmd}`).join("\n")}
+            {displayCommands.map((cmd) => `$ ${cmd}`).join("\n")}
           </Box>
         </DialogContent>
         <DialogActions>

@@ -9,6 +9,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
 import TuneIcon from "@mui/icons-material/Tune";
 import SettingsIcon from "@mui/icons-material/Settings";
+import DataObjectIcon from "@mui/icons-material/DataObject";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import BugReportIcon from "@mui/icons-material/BugReport";
@@ -19,11 +20,13 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { RunbookList } from "./components/RunbookList";
 import { RunbookFormDialog } from "./components/RunbookFormDialog";
 import { CategoryManagementDialog } from "./components/CategoryManagementDialog";
+import { GlobalVariablesDialog } from "./components/GlobalVariablesDialog";
 import { DiagnosticDialog } from "./components/DiagnosticDialog";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { GettingStartedDialog } from "./components/GettingStartedDialog";
 import { useRunbooks } from "./context/RunbookContext";
 import { useCategories } from "./context/CategoryContext";
+import { useConstants } from "./context/ConstantContext";
 import { exportRunbooks, importRunbooks } from "./storage";
 
 const REPO_URL = "https://github.com/HerbHall/Runbooks";
@@ -37,8 +40,10 @@ export function useDockerDesktopClient() {
 export default function App() {
   const { runbooks, replaceAll } = useRunbooks();
   const { categories, replaceAllCategories } = useCategories();
+  const { constants, replaceAllConstants } = useConstants();
   const [formOpen, setFormOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
   const [helpAnchor, setHelpAnchor] = useState<null | HTMLElement>(null);
@@ -57,7 +62,7 @@ export default function App() {
   }, []);
 
   const handleExport = () => {
-    exportRunbooks(runbooks, categories);
+    exportRunbooks(runbooks, categories, constants);
     ddClient.desktopUI.toast.success("Runbooks exported");
   };
 
@@ -73,6 +78,9 @@ export default function App() {
       replaceAll(result.runbooks);
       if (result.categories) {
         replaceAllCategories(result.categories);
+      }
+      if (result.globals) {
+        replaceAllConstants(result.globals);
       }
       ddClient.desktopUI.toast.success(`Imported ${result.runbooks.length} runbooks`);
     } catch (err) {
@@ -93,6 +101,9 @@ export default function App() {
         <Stack direction="row" spacing={1}>
           <Button size="small" startIcon={<TuneIcon />} onClick={() => setSettingsOpen(true)}>
             Settings
+          </Button>
+          <Button size="small" startIcon={<DataObjectIcon />} onClick={() => setVariablesDialogOpen(true)}>
+            Variables
           </Button>
           <Button size="small" startIcon={<SettingsIcon />} onClick={() => setCategoryDialogOpen(true)}>
             Categories
@@ -189,6 +200,7 @@ export default function App() {
 
       <RunbookFormDialog open={formOpen} onClose={() => setFormOpen(false)} />
       <CategoryManagementDialog open={categoryDialogOpen} onClose={() => setCategoryDialogOpen(false)} />
+      <GlobalVariablesDialog open={variablesDialogOpen} onClose={() => setVariablesDialogOpen(false)} />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <GettingStartedDialog open={gettingStartedOpen} onClose={() => setGettingStartedOpen(false)} />
       <DiagnosticDialog

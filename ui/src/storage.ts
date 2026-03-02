@@ -1,8 +1,9 @@
-import type { Runbook, Category } from "./types";
+import type { Runbook, Category, GlobalVariable } from "./types";
 import { DEFAULT_CATEGORIES } from "./category-defaults";
 
 const STORAGE_KEY = "runbooks-data";
 const CATEGORIES_KEY = "runbooks-categories";
+const GLOBALS_KEY = "runbooks-globals";
 const PREFS_KEY = "runbooks-prefs";
 
 export const DEFAULT_RUNBOOKS: Runbook[] = [
@@ -128,8 +129,26 @@ export function saveCategories(categories: Category[]): void {
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
 }
 
-export function exportRunbooks(runbooks: Runbook[], categories?: Category[]): void {
-  const payload = { runbooks, categories: categories ?? [] };
+export function loadGlobalVariables(): GlobalVariable[] {
+  const raw = localStorage.getItem(GLOBALS_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as GlobalVariable[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveGlobalVariables(globals: GlobalVariable[]): void {
+  localStorage.setItem(GLOBALS_KEY, JSON.stringify(globals));
+}
+
+export function exportRunbooks(runbooks: Runbook[], categories?: Category[], globals?: GlobalVariable[]): void {
+  const exportedGlobals = (globals ?? []).map((g) => ({
+    ...g,
+    value: g.isSecret ? "" : g.value,
+  }));
+  const payload = { runbooks, categories: categories ?? [], globals: exportedGlobals };
   const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -167,6 +186,7 @@ export function savePreference(key: string, value: unknown): void {
 export interface ImportResult {
   runbooks: Runbook[];
   categories?: Category[];
+  globals?: GlobalVariable[];
 }
 
 export function importRunbooks(file: File): Promise<ImportResult> {
@@ -182,6 +202,7 @@ export function importRunbooks(file: File): Promise<ImportResult> {
           resolve({
             runbooks: data.runbooks as Runbook[],
             categories: Array.isArray(data.categories) ? data.categories as Category[] : undefined,
+            globals: Array.isArray(data.globals) ? data.globals as GlobalVariable[] : undefined,
           });
         } else {
           reject(new Error("Invalid format: expected runbooks array or { runbooks, categories }"));

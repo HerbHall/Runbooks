@@ -4,6 +4,7 @@ import { DockerMuiThemeProvider } from "@docker/docker-mui-theme";
 import CssBaseline from "@mui/material/CssBaseline";
 import { RunbookProvider } from "./context/RunbookContext";
 import { CategoryProvider } from "./context/CategoryContext";
+import { ConstantProvider } from "./context/ConstantContext";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -18,7 +19,9 @@ root.render(
       <ErrorBoundary>
         <RunbookProvider>
           <CategoryProvider>
-            <App />
+            <ConstantProvider>
+              <App />
+            </ConstantProvider>
           </CategoryProvider>
         </RunbookProvider>
       </ErrorBoundary>

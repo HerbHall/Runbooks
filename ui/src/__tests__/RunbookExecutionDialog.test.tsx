@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import type { Runbook } from "../types";
 import { RunbookExecutionDialog } from "../components/RunbookExecutionDialog";
+import { ConstantProvider } from "../context/ConstantContext";
 
 const mockRecordExecution = vi.fn();
 const mockToastSuccess = vi.fn();
@@ -118,6 +119,10 @@ const containerRunbook: Runbook = {
   updatedAt: "2026-01-01T00:00:00Z",
 };
 
+function renderWithProviders(ui: React.ReactElement) {
+  return render(<ConstantProvider>{ui}</ConstantProvider>);
+}
+
 beforeEach(() => {
   localStorage.clear();
   mockRecordExecution.mockClear();
@@ -133,7 +138,7 @@ beforeEach(() => {
 describe("RunbookExecutionDialog", () => {
   describe("Preview", () => {
     it("shows preview when dialog opens", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -144,7 +149,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("shows Run, Copy, Cancel buttons in preview", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -155,7 +160,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("shows all commands in preview for multi-command runbook", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={multiCommandRunbook} />,
       );
       await waitFor(() => {
@@ -167,7 +172,7 @@ describe("RunbookExecutionDialog", () => {
 
     it("clicking Cancel in preview closes dialog", async () => {
       const onClose = vi.fn();
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={onClose} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -178,7 +183,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("clicking Run in preview starts execution", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -193,7 +198,7 @@ describe("RunbookExecutionDialog", () => {
 
   describe("Execution (after preview)", () => {
     it("renders dialog with runbook name in running state", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -206,7 +211,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("shows commands in the running dialog", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={multiCommandRunbook} />,
       );
       await waitFor(() => {
@@ -221,7 +226,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("shows streaming output during execution", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -245,7 +250,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("records execution history on completion", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -272,7 +277,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("shows success message on completion", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -292,7 +297,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("shows Close button when not running", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -315,7 +320,7 @@ describe("RunbookExecutionDialog", () => {
 
   describe("Navigation Links", () => {
     it("shows View Containers button after container command completes", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={containerRunbook} />,
       );
       await waitFor(() => {
@@ -335,7 +340,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("calls navigate.viewContainers when View Containers is clicked", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={containerRunbook} />,
       );
       await waitFor(() => {
@@ -358,7 +363,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("does not show navigation buttons for non-navigable commands", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
       );
       await waitFor(() => {
@@ -382,7 +387,7 @@ describe("RunbookExecutionDialog", () => {
     });
 
     it("shows navigation buttons even when execution fails", async () => {
-      render(
+      renderWithProviders(
         <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={containerRunbook} />,
       );
       await waitFor(() => {

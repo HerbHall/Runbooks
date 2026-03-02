@@ -42,3 +42,12 @@ export interface Category {
 }
 
 export type GroupMode = "none" | "tag" | "category";
+
+export interface GlobalVariable {
+  id: string;
+  name: string;
+  value: string;
+  isSecret: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
