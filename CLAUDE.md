@@ -12,7 +12,7 @@
 - **Repo:** https://github.com/HerbHall/Runbooks
 - **License:** MIT
 - **Owner:** Herb Hall (HerbHall)
-- **Status:** Feature-complete MVP (v0.1.0), untested in Docker Desktop
+- **Status:** Feature-complete MVP (v0.2.0), tested in Docker Desktop
 - **Workspace:** `D:\DevSpace\runbooks.code-workspace` (DevSpace root, per convention)
 
 ## Architecture
