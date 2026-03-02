@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import {
   Card,
   CardContent,
@@ -34,7 +34,7 @@ interface RunbookCardProps {
   compact?: boolean;
 }
 
-export function RunbookCard({ runbook, category, collapsed = false, onToggleCollapse, compact = false }: RunbookCardProps) {
+export const RunbookCard = memo(function RunbookCard({ runbook, category, collapsed = false, onToggleCollapse, compact = false }: RunbookCardProps) {
   const { togglePin } = useRunbooks();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -133,4 +133,4 @@ export function RunbookCard({ runbook, category, collapsed = false, onToggleColl
       <RunbookExecutionDialog open={execOpen} onClose={() => setExecOpen(false)} runbook={runbook} />
     </>
   );
-}
+});
