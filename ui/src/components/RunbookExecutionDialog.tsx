@@ -21,6 +21,7 @@ import type { Runbook, CommandResult, ExecutionStatus } from "../types";
 import { useDockerDesktopClient } from "../App";
 import { getDestructiveWarnings, type DestructiveWarning } from "../utils/destructive-commands";
 import { recordExecution } from "../utils/execution-history";
+import { getNavigationActions, type NavigationTarget } from "../utils/output-links";
 import { hasVariables } from "../utils/variables";
 import { ParameterInputDialog } from "./ParameterInputDialog";
 
@@ -226,6 +227,20 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
     processRef.current = null;
   }, []);
 
+  const handleNavigate = (target: NavigationTarget) => {
+    switch (target) {
+      case "containers":
+        ddClient.desktopUI.navigate.viewContainers();
+        break;
+      case "images":
+        ddClient.desktopUI.navigate.viewImages();
+        break;
+      case "volumes":
+        ddClient.desktopUI.navigate.viewVolumes();
+        break;
+    }
+  };
+
   useEffect(() => {
     if (status !== "running") return;
     const handler = (e: KeyboardEvent) => {
@@ -363,6 +378,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
   }
 
   const commands = resolvedCommands ?? runbook.commands;
+  const navigationActions = getNavigationActions(commands);
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
@@ -458,6 +474,21 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
             sx={{ mr: "auto", ml: 1 }}
           />
         )}
+        {(status === "completed" || status === "failed") &&
+          navigationActions.length > 0 && (
+            <Stack direction="row" spacing={1}>
+              {navigationActions.map((action) => (
+                <Button
+                  key={action.target}
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handleNavigate(action.target)}
+                >
+                  {action.label}
+                </Button>
+              ))}
+            </Stack>
+          )}
         {status === "running" ? (
           <Button onClick={handleAbort} color="error">
             Abort
