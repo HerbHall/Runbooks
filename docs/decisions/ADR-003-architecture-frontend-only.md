@@ -7,6 +7,7 @@
 ## Context
 
 Docker Desktop Extensions support three execution contexts:
+
 1. **Frontend (UI)** — React app running in Docker Desktop's embedded browser
 2. **Backend (VM service)** — Go/Node binary running inside Docker Desktop's VM
 3. **Host binaries** — Executables running directly on the host OS
@@ -26,12 +27,14 @@ The `docker extension init` scaffold generates all three by default. We needed t
 ## Trade-offs
 
 **Advantages:**
+
 - Simpler build (no Go compilation, no multi-arch binary concerns)
 - Faster iteration (hot-reload with `react-scripts start`)
 - Smaller extension image (no backend binary)
 - Easier for contributors to understand
 
 **Risks:**
+
 - If we later need filesystem access beyond what the Extension SDK provides, we'd need to add a backend. This would require a new ADR and Dockerfile changes.
 - Extension SDK's `docker.cli.exec()` runs commands as the Docker Desktop user — this is fine for Docker commands but limits general system access.
 
