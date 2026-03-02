@@ -9,50 +9,69 @@
 
 **Runbooks** is a Docker Desktop Extension that lets users create, organize, and execute saved Docker command scripts directly from the Docker Desktop UI.
 
-- **Repo:** https://github.com/HerbHall/Runbooks
+- **Repo:** [github.com/HerbHall/Runbooks](https://github.com/HerbHall/Runbooks)
 - **License:** MIT
 - **Owner:** Herb Hall (HerbHall)
-- **Status:** Feature-complete MVP (v0.2.0), tested in Docker Desktop
+- **Status:** v0.2.0, tested in Docker Desktop, pending marketplace submission
 - **Workspace:** `D:\DevSpace\runbooks.code-workspace` (DevSpace root, per convention)
 
 ## Architecture
 
 **Frontend-only Docker Desktop Extension.** No backend service.
 
-```
+```text
 Runbooks/
 ├── metadata.json          # Docker extension manifest
 ├── Dockerfile             # Multi-stage: build React UI, serve from Alpine
 ├── Makefile               # Build, install, validate, dev workflow targets
 ├── docker.svg             # Extension icon (blue document + play button)
-├── ui/                    # React + TypeScript + Material UI frontend
-│   ├── package.json
+├── scripts/
+│   └── validate-extension.sh  # Static Dockerfile label validation
+├── ui/                    # React 18 + TypeScript + MUI 5 + Vite 7
+│   ├── package.json       # v0.2.0 (single source of truth for version)
 │   ├── tsconfig.json
+│   ├── vitest.config.ts   # Vitest config with jsdom + vite merge
 │   ├── vite.config.ts     # Vite build config (base: ./, outDir: build)
 │   ├── index.html         # Vite entry HTML (root of ui/, not public/)
 │   └── src/
 │       ├── index.tsx      # Entry point with DockerMuiThemeProvider
-│       ├── App.tsx        # Main layout, version display, ddClient init
+│       ├── App.tsx        # Main layout, toolbar, help menu, ddClient init
 │       ├── types.ts       # Runbook type definition
-│       ├── storage.ts     # localStorage CRUD + import/export
+│       ├── storage.ts     # localStorage CRUD + import/export + DEFAULT_RUNBOOKS
 │       ├── docker-commands.ts  # Command validation rules + syntax data
 │       ├── category-defaults.ts # Default category definitions
-│       ├── vite-env.d.ts  # Vite type declarations
+│       ├── vite-env.d.ts  # Vite + __APP_VERSION__ type declarations
+│       ├── test-setup.ts  # Vitest setup (@testing-library/jest-dom)
 │       ├── context/
-│       │   ├── RunbookContext.tsx   # Runbook state + CRUD operations
+│       │   ├── RunbookContext.tsx   # Runbook state + CRUD + showExamples toggle
 │       │   └── CategoryContext.tsx  # Category management state
-│       └── components/
-│           ├── RunbookList.tsx      # Main view: search, sort, group, layout
-│           ├── RunbookCard.tsx      # Individual runbook card display
-│           ├── RunbookFormDialog.tsx # Create/edit dialog with tag autocomplete
-│           ├── RunbookDeleteDialog.tsx    # Delete confirmation
-│           ├── RunbookExecutionDialog.tsx # Command execution + output
-│           ├── CommandEditor.tsx    # Syntax-highlighted command input
-│           ├── CategoryBadge.tsx    # Colored category chip
-│           └── CategoryManagementDialog.tsx # Category CRUD
-├── .coordination/         # Session handoff and status tracking
-│   └── handoff.md
+│       ├── hooks/
+│       │   └── useDockerResources.ts  # Docker resource autocomplete hook
+│       ├── utils/
+│       │   ├── variables.ts          # {{name=default|opts}} parser + resolver
+│       │   ├── destructive-commands.ts # Destructive command detection
+│       │   ├── execution-history.ts  # Last-run tracking in localStorage
+│       │   └── output-links.ts       # Post-execution navigation link builder
+│       ├── components/
+│       │   ├── RunbookList.tsx           # Main view: search, sort, group, layout
+│       │   ├── RunbookCard.tsx           # Individual runbook card display
+│       │   ├── RunbookFormDialog.tsx     # Create/edit dialog with tag autocomplete
+│       │   ├── RunbookDeleteDialog.tsx   # Delete confirmation
+│       │   ├── RunbookExecutionDialog.tsx # Streaming execution + output
+│       │   ├── ParameterInputDialog.tsx  # Two-panel variable resolution
+│       │   ├── CommandEditor.tsx         # Syntax-highlighted command input
+│       │   ├── CategoryBadge.tsx         # Colored category chip
+│       │   ├── CategoryManagementDialog.tsx # Category CRUD
+│       │   ├── DiagnosticDialog.tsx      # Bug/feature feedback
+│       │   ├── ErrorBoundary.tsx         # React error boundary with recovery
+│       │   ├── SettingsDialog.tsx        # Show/hide examples, reset defaults
+│       │   └── GettingStartedDialog.tsx  # Features, shortcuts, variable syntax
+│       └── __tests__/
+│           └── RunbookList.test.tsx      # RunbookList component tests
+├── .coordination/
+│   └── handoff.md         # Session handoff and status tracking
 ├── docs/
+│   ├── screenshots/       # Extension screenshots for README + marketplace
 │   └── decisions/         # Architecture Decision Records (ADR)
 │       ├── ADR-001-project-name.md
 │       ├── ADR-002-license-and-monetization.md
@@ -104,14 +123,29 @@ make dev-attach      # Point extension at local dev server
 make build-extension
 make validate-extension
 
+# Quick reinstall (remove + build + install)
+make reinstall-extension
+
+# Run tests
+cd ui && npx vitest run      # 142 unit tests
+cd ui && npx tsc --noEmit    # Type check
+cd ui && npx eslint .        # Lint
+
 # Reset
 make dev-reset
 make remove-extension
 ```
 
-## What's Next
+## Version Management
 
-Extension needs Docker Desktop integration testing — build, install, and verify all features work in the actual extension environment.
+`ui/package.json` version is the single source of truth. Vite reads it at build time via `define: { __APP_VERSION__: JSON.stringify(pkg.version) }`. The Dockerfile passes VERSION as a build-arg and runs `npm version "$VERSION"` to sync before building.
+
+## Open Issues
+
+- #132: Card collapse bug (open)
+- #131: Constant variables/secrets (enhancement)
+- #94-#107: Backlog enhancements (low priority research findings)
+- #62, #63: Phase 4 community outreach (manual)
 
 ## Conventions
 
@@ -119,3 +153,4 @@ Extension needs Docker Desktop integration testing — build, install, and verif
 - Material UI components to match Docker Desktop's native look
 - TypeScript strict mode enabled
 - No Go backend unless a future requirement demands it (document in ADR first)
+- `example-` ID prefix for default example runbooks (filtered by settings toggle)
