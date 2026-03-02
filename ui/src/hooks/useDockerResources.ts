@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useDockerDesktopClient } from "../App";
 
+export type DockerResourceType = "container" | "image" | "volume" | "network";
+
 export interface DockerResource {
   name: string;
-  type: "container" | "image";
+  type: DockerResourceType;
 }
 
 interface ContainerInfo {
@@ -12,6 +14,27 @@ interface ContainerInfo {
 
 interface ImageInfo {
   RepoTags?: string[];
+}
+
+interface VolumeInfo {
+  Name?: string;
+}
+
+interface NetworkInfo {
+  Name?: string;
+}
+
+/**
+ * Map a variable name to a Docker resource type for autocomplete suggestions.
+ * Returns null if the name doesn't match any known resource pattern.
+ */
+export function getResourceTypeForVariable(name: string): DockerResourceType | null {
+  const lower = name.toLowerCase();
+  if (lower.includes("container")) return "container";
+  if (lower.includes("image")) return "image";
+  if (lower.includes("volume")) return "volume";
+  if (lower.includes("network")) return "network";
+  return null;
 }
 
 export function useDockerResources(): DockerResource[] {
@@ -50,6 +73,32 @@ export function useDockerResources(): DockerResource[] {
         }
       } catch {
         // Not in Docker Desktop or API unavailable
+      }
+
+      try {
+        const result = await ddClient.docker.cli.exec("volume", ["ls", "--format", "json"]);
+        const lines = result.stdout.split("\n").filter(Boolean);
+        for (const line of lines) {
+          const vol = JSON.parse(line) as VolumeInfo;
+          if (vol.Name) {
+            items.push({ name: vol.Name, type: "volume" });
+          }
+        }
+      } catch {
+        // volume ls unavailable
+      }
+
+      try {
+        const result = await ddClient.docker.cli.exec("network", ["ls", "--format", "json"]);
+        const lines = result.stdout.split("\n").filter(Boolean);
+        for (const line of lines) {
+          const net = JSON.parse(line) as NetworkInfo;
+          if (net.Name) {
+            items.push({ name: net.Name, type: "network" });
+          }
+        }
+      } catch {
+        // network ls unavailable
       }
 
       if (!cancelled) {
