@@ -20,7 +20,15 @@ export interface CommandResult {
 
 export type ExecutionStatus = "idle" | "running" | "completed" | "failed";
 
-export type SortOption = "name-asc" | "name-desc" | "created-desc" | "created-asc" | "modified-desc" | "modified-asc";
+export interface ExecutionHistoryEntry {
+  timestamp: string;
+  exitCode: number;
+  duration: number;
+  commandCount: number;
+  outputSnippet: string;
+}
+
+export type SortOption = "name-asc" | "name-desc" | "created-desc" | "created-asc" | "modified-desc" | "modified-asc" | "last-run-desc";
 
 export type LayoutMode = "grid" | "list";
 

@@ -19,6 +19,7 @@ import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import type { Runbook, Category } from "../types";
 import { useRunbooks } from "../context/RunbookContext";
+import { getLastRun, formatTimeAgo } from "../utils/execution-history";
 import { VARIABLE_REGEX, escapeHtml } from "../utils/variables";
 import { RunbookFormDialog } from "./RunbookFormDialog";
 import { RunbookDeleteDialog } from "./RunbookDeleteDialog";
@@ -38,6 +39,7 @@ export function RunbookCard({ runbook, category, collapsed = false, onToggleColl
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [execOpen, setExecOpen] = useState(false);
+  const lastRun = getLastRun(runbook.id);
 
   return (
     <>
@@ -91,6 +93,11 @@ export function RunbookCard({ runbook, category, collapsed = false, onToggleColl
               {runbook.description && (
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                   {runbook.description}
+                </Typography>
+              )}
+              {lastRun != null && (
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
+                  Last run: {formatTimeAgo(lastRun.timestamp)} ({lastRun.exitCode === 0 ? "success" : "failed"})
                 </Typography>
               )}
               <Box
