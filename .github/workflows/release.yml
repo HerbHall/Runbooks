@@ -12,9 +12,23 @@ on:
         type: string
 
 jobs:
+  validate:
+    name: Validate Extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate extension packaging
+        run: bash scripts/validate-extension.sh
+
   publish:
     name: Publish to Docker Hub
     runs-on: ubuntu-latest
+    needs: [validate]
     steps:
       - uses: actions/checkout@v6
 

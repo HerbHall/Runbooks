@@ -28,8 +28,11 @@ prepare-buildx: ## Create buildx builder for multi-arch build
 push-extension: prepare-buildx ## Build and push multi-arch extension image
 	docker buildx build --push --builder=$(BUILDER) --platform=linux/amd64,linux/arm64 --build-arg VERSION=$(VERSION) --tag=$(IMAGE):$(TAG) .
 
-validate-extension: ## Validate the extension
+validate-extension: ## Validate the extension (requires Docker Desktop)
 	docker extension validate $(IMAGE):$(TAG)
+
+validate: ## Static validation of Dockerfile labels and metadata.json
+	@bash scripts/validate-extension.sh
 
 dev-ui: ## Start UI hot reload for development
 	cd ui && npm run dev
