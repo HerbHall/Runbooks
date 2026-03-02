@@ -11,7 +11,7 @@ export const DEFAULT_RUNBOOKS: Runbook[] = [
     name: "Running Containers",
     description: "Show all running containers with key details. Uses Go template formatting.",
     commands: [
-      'docker ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}"',
+      "docker ps --format table\\t{{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}",
     ],
     tags: ["monitoring"],
     categoryId: "cat-operations",
@@ -43,7 +43,7 @@ export const DEFAULT_RUNBOOKS: Runbook[] = [
     name: "Image Inspector",
     description: "Inspect an image's metadata and layer history. Uses image autocomplete and multi-command.",
     commands: [
-      'docker inspect {{image}} --format "{{.Id}}\\n{{.RepoTags}}\\nSize: {{.Size}}"',
+      "docker inspect {{image}} --format {{.Id}}\\n{{.RepoTags}}\\nSize:\\t{{.Size}}",
       "docker history {{image}}",
     ],
     tags: ["debug"],
@@ -56,8 +56,8 @@ export const DEFAULT_RUNBOOKS: Runbook[] = [
     name: "Disk Usage Report",
     description: "Full breakdown of Docker disk usage across images, containers, and volumes.",
     commands: [
-      "docker system df -v",
-      'docker image ls --format "table {{.Repository}}\\t{{.Tag}}\\t{{.Size}}"',
+      "docker system df",
+      "docker image ls",
       "docker volume ls",
     ],
     tags: ["maintenance"],
