@@ -12,7 +12,14 @@ const mockClose = vi.fn();
 vi.mock("@docker/extension-api-client", () => ({
   createDockerDesktopClient: vi.fn(() => ({
     docker: { cli: { exec: vi.fn() } },
-    desktopUI: { toast: { success: vi.fn(), error: vi.fn() } },
+    desktopUI: {
+      toast: { success: vi.fn(), error: vi.fn() },
+      navigate: {
+        viewContainers: vi.fn(),
+        viewImages: vi.fn(),
+        viewVolumes: vi.fn(),
+      },
+    },
     host: { openExternal: vi.fn() },
   })),
 }));
@@ -50,6 +57,10 @@ let streamCallbacks: {
   onError?: (error: unknown) => void;
 } = {};
 
+const mockNavigateContainers = vi.fn();
+const mockNavigateImages = vi.fn();
+const mockNavigateVolumes = vi.fn();
+
 vi.mock("../App", () => ({
   useDockerDesktopClient: vi.fn(() => ({
     docker: {
@@ -67,6 +78,11 @@ vi.mock("../App", () => ({
       toast: {
         success: mockToastSuccess,
         error: mockToastError,
+      },
+      navigate: {
+        viewContainers: mockNavigateContainers,
+        viewImages: mockNavigateImages,
+        viewVolumes: mockNavigateVolumes,
       },
     },
   })),
@@ -92,12 +108,25 @@ const multiCommandRunbook: Runbook = {
   updatedAt: "2026-01-01T00:00:00Z",
 };
 
+const containerRunbook: Runbook = {
+  id: "exec-test-3",
+  name: "Container Runbook",
+  description: "Runbook with container commands",
+  commands: ["docker run nginx"],
+  tags: [],
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-01T00:00:00Z",
+};
+
 beforeEach(() => {
   localStorage.clear();
   mockRecordExecution.mockClear();
   mockToastSuccess.mockClear();
   mockToastError.mockClear();
   mockClose.mockClear();
+  mockNavigateContainers.mockClear();
+  mockNavigateImages.mockClear();
+  mockNavigateVolumes.mockClear();
   streamCallbacks = {};
 });
 
@@ -281,6 +310,97 @@ describe("RunbookExecutionDialog", () => {
       await waitFor(() => {
         expect(screen.getByText("Close")).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("Navigation Links", () => {
+    it("shows View Containers button after container command completes", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={containerRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+
+      await waitFor(() => {
+        expect(streamCallbacks.onClose).toBeDefined();
+      });
+
+      streamCallbacks.onClose?.(0);
+
+      await waitFor(() => {
+        expect(screen.getByText("View Containers")).toBeInTheDocument();
+      });
+    });
+
+    it("calls navigate.viewContainers when View Containers is clicked", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={containerRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+
+      await waitFor(() => {
+        expect(streamCallbacks.onClose).toBeDefined();
+      });
+
+      streamCallbacks.onClose?.(0);
+
+      await waitFor(() => {
+        expect(screen.getByText("View Containers")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText("View Containers"));
+      expect(mockNavigateContainers).toHaveBeenCalled();
+    });
+
+    it("does not show navigation buttons for non-navigable commands", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={simpleRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+
+      await waitFor(() => {
+        expect(streamCallbacks.onClose).toBeDefined();
+      });
+
+      streamCallbacks.onClose?.(0);
+
+      await waitFor(() => {
+        expect(screen.getByText("Close")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText("View Containers")).not.toBeInTheDocument();
+      expect(screen.queryByText("View Images")).not.toBeInTheDocument();
+      expect(screen.queryByText("View Volumes")).not.toBeInTheDocument();
+    });
+
+    it("shows navigation buttons even when execution fails", async () => {
+      render(
+        <RunbookExecutionDialog open={true} onClose={vi.fn()} runbook={containerRunbook} />,
+      );
+      await waitFor(() => {
+        expect(screen.getByText("Run")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("Run"));
+
+      await waitFor(() => {
+        expect(streamCallbacks.onClose).toBeDefined();
+      });
+
+      streamCallbacks.onClose?.(1);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Execution stopped due to error/)).toBeInTheDocument();
+      });
+
+      expect(screen.getByText("View Containers")).toBeInTheDocument();
     });
   });
 });
