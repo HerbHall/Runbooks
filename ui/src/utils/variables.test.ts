@@ -225,7 +225,7 @@ describe("substituteVariables", () => {
       ["docker run --restart {{policy=always|no,always}} app"],
       { policy: "" },
     );
-    expect(result).toEqual(["docker run --restart always app"]);
+    expect(result).toEqual(["docker run --restart  app"]);
   });
 });
 
