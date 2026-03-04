@@ -1,11 +1,8 @@
 IMAGE ?= herbhall/runbooks
 TAG ?= latest
-VERSION ?= $(shell node -p "require('./ui/package.json').version" 2>/dev/null || echo "0.2.0")
+VERSION ?= $(shell cat VERSION 2>/dev/null || echo "0.0.0")
 
 BUILDER = buildx-multi-arch
-
-STATIC_FLAGS = CGO_ENABLED=0
-LDFLAGS = -s -w
 
 INFO_COLOR = \033[0;36m
 NO_COLOR   = \033[m

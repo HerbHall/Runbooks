@@ -12,6 +12,11 @@
           "type": "generic",
           "path": "Dockerfile",
           "glob": false
+        },
+        {
+          "type": "json",
+          "path": "ui/package.json",
+          "jsonpath": "$.version"
         }
       ]
     }
