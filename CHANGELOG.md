@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/HerbHall/Runbooks/compare/v0.2.0...v0.2.1) (2026-03-04)
+
+
+### Features
+
+* add GitHub Copilot integration files ([#143](https://github.com/HerbHall/Runbooks/issues/143)) ([94a5ea2](https://github.com/HerbHall/Runbooks/commit/94a5ea252b540736527815602316c9dc84d68b66))
+* add smart collection filter chips for execution history ([#141](https://github.com/HerbHall/Runbooks/issues/141)) ([8d9a561](https://github.com/HerbHall/Runbooks/commit/8d9a56181e24d8abbc70cbc5b97b95194756cd9d)), closes [#103](https://github.com/HerbHall/Runbooks/issues/103)
+* add soft delete with trash dialog and auto-purge ([#142](https://github.com/HerbHall/Runbooks/issues/142)) ([2425c2c](https://github.com/HerbHall/Runbooks/commit/2425c2c67bd668ca1dd68c2c2021d65398baa1ba)), closes [#105](https://github.com/HerbHall/Runbooks/issues/105)
+
+
+### Bug Fixes
+
+* use simple release type for non-root package.json ([#139](https://github.com/HerbHall/Runbooks/issues/139)) ([c0717ed](https://github.com/HerbHall/Runbooks/commit/c0717eddea94d9ee0b0ca5ef03d496055f36a1ea))
+
 ## [Unreleased]
 
 ### Added
