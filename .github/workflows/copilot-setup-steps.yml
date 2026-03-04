@@ -1,0 +1,22 @@
+name: Copilot Setup Steps
+
+on: workflow_dispatch
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ui
+
+      - name: Verify TypeScript compilation
+        run: npx tsc --noEmit
+        working-directory: ui
