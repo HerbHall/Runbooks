@@ -13,7 +13,7 @@ echo "--- lint"
 npm run lint
 
 echo "--- test"
-npm run test 2>/dev/null || echo "(no tests configured or all skipped)"
+npm run test
 
 echo "--- build"
 npm run build
@@ -21,6 +21,6 @@ npm run build
 cd ..
 
 echo "--- markdownlint"
-npx --yes markdownlint-cli2 "**/*.md" "#node_modules" "#ui/node_modules" "#.git"
+npx --yes markdownlint-cli2 "**/*.md" "#node_modules" "#**/node_modules" "#.git" "#CHANGELOG.md"
 
 echo "==> pre-push: all checks passed"
