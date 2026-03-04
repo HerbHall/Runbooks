@@ -70,7 +70,7 @@ export function substituteVariables(
     const substituted = cmd.replace(
       new RegExp(VARIABLE_REGEX.source, "g"),
       (_fullMatch, name: string, defaultValue?: string) => {
-        if (name in values && values[name] !== "") {
+        if (name in values) {
           return values[name];
         }
         return defaultValue ?? "";

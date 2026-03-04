@@ -33,10 +33,23 @@ interface RunbookExecutionDialogProps {
 }
 
 function parseCommand(raw: string): string[] {
-  const tokens = raw.split(/\s+/).filter(Boolean);
-  if (tokens[0]?.toLowerCase() === "docker") {
-    tokens.shift();
+  const tokens: string[] = [];
+  let current = "";
+  let inQuote: string | null = null;
+  for (const ch of raw.trim()) {
+    if (inQuote) {
+      if (ch === inQuote) { inQuote = null; }
+      else { current += ch; }
+    } else if (ch === '"' || ch === "'") {
+      inQuote = ch;
+    } else if (/\s/.test(ch)) {
+      if (current) { tokens.push(current); current = ""; }
+    } else {
+      current += ch;
+    }
   }
+  if (current) tokens.push(current);
+  if (tokens[0]?.toLowerCase() === "docker") tokens.shift();
   return tokens;
 }
 
