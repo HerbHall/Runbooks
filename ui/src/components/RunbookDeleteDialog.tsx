@@ -31,7 +31,7 @@ export function RunbookDeleteDialog({ open, onClose, runbook }: RunbookDeleteDia
       <DialogTitle>Delete Runbook</DialogTitle>
       <DialogContent>
         <Typography>
-          Are you sure you want to delete &quot;{runbook.name}&quot;? This cannot be undone.
+          Are you sure you want to delete &quot;{runbook.name}&quot;? This will move the runbook to Trash. You can restore it within 30 days.
         </Typography>
       </DialogContent>
       <DialogActions>
