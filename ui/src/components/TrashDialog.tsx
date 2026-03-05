@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, List, ListItem, ListItemText, ListItemSecondaryAction,
@@ -20,6 +20,7 @@ function formatDeletedDate(iso: string): string {
 
 export function TrashDialog({ open, onClose }: TrashDialogProps) {
   const { trashedRunbooks, restoreRunbook, permanentDeleteRunbook, emptyTrash } = useRunbooks();
+  const [confirmEmpty, setConfirmEmpty] = useState(false);
 
   const sorted = useMemo(
     () => [...trashedRunbooks].sort((a, b) =>
@@ -28,8 +29,22 @@ export function TrashDialog({ open, onClose }: TrashDialogProps) {
     [trashedRunbooks],
   );
 
+  const handleEmptyTrashClick = () => {
+    if (confirmEmpty) {
+      emptyTrash();
+      setConfirmEmpty(false);
+    } else {
+      setConfirmEmpty(true);
+    }
+  };
+
+  const handleClose = () => {
+    setConfirmEmpty(false);
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">Trash</Typography>
@@ -37,10 +52,13 @@ export function TrashDialog({ open, onClose }: TrashDialogProps) {
             <Button
               size="small"
               color="error"
+              variant={confirmEmpty ? "contained" : "text"}
               startIcon={<DeleteForeverIcon />}
-              onClick={emptyTrash}
+              onClick={handleEmptyTrashClick}
             >
-              Empty Trash
+              {confirmEmpty
+                ? `Permanently delete ${sorted.length} runbook${sorted.length === 1 ? "" : "s"}`
+                : "Empty Trash"}
             </Button>
           )}
         </Stack>
@@ -82,7 +100,7 @@ export function TrashDialog({ open, onClose }: TrashDialogProps) {
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={handleClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

@@ -53,16 +53,22 @@ export default function App() {
   const [trashOpen, setTrashOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isAnyDialogOpen = formOpen || categoryDialogOpen || variablesDialogOpen
+    || settingsOpen || gettingStartedOpen || trashOpen || diagnosticType !== null
+    || Boolean(helpAnchor);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === "n") {
         e.preventDefault();
-        setFormOpen(true);
+        if (!isAnyDialogOpen) {
+          setFormOpen(true);
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [isAnyDialogOpen]);
 
   const handleExport = () => {
     exportRunbooks(runbooks, categories, constants);
