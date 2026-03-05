@@ -48,7 +48,7 @@ export const RunbookCard = memo(function RunbookCard({ runbook, category, collap
           {/* Row 1: collapse + title + action buttons */}
           <Stack direction="row" alignItems="center" spacing={0.5}>
             {onToggleCollapse && (
-              <IconButton size="small" onClick={onToggleCollapse} title={collapsed ? "Expand" : "Collapse"}>
+              <IconButton size="small" onClick={onToggleCollapse} title={collapsed ? "Expand" : "Collapse"} aria-label={collapsed ? "Expand" : "Collapse"}>
                 {collapsed ? (
                   <ExpandMoreIcon sx={{ fontSize: "1rem" }} />
                 ) : (
@@ -75,17 +75,19 @@ export const RunbookCard = memo(function RunbookCard({ runbook, category, collap
               <IconButton
                 size="small"
                 title={runbook.pinned ? "Unpin" : "Pin"}
+                aria-label={runbook.pinned ? "Unpin" : "Pin"}
                 onClick={() => togglePin(runbook.id)}
                 color={runbook.pinned ? "warning" : "default"}
               >
                 {runbook.pinned ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
               </IconButton>
-              <IconButton size="small" color="primary" title="Run" onClick={() => setExecOpen(true)}>
+              <IconButton size="small" color="primary" title="Run" aria-label="Run" onClick={() => setExecOpen(true)}>
                 <PlayArrowIcon fontSize="small" />
               </IconButton>
               <IconButton
                 size="small"
                 title="Copy commands"
+                aria-label="Copy commands"
                 onClick={() => {
                   navigator.clipboard.writeText(runbook.commands.join("\n")).catch((err) => {
                     console.error("Failed to copy to clipboard:", err);
@@ -94,10 +96,10 @@ export const RunbookCard = memo(function RunbookCard({ runbook, category, collap
               >
                 <ContentCopyIcon fontSize="small" />
               </IconButton>
-              <IconButton size="small" title="Edit" onClick={() => setEditOpen(true)}>
+              <IconButton size="small" title="Edit" aria-label="Edit" onClick={() => setEditOpen(true)}>
                 <EditIcon fontSize="small" />
               </IconButton>
-              <IconButton size="small" title="Delete" color="error" onClick={() => setDeleteOpen(true)}>
+              <IconButton size="small" title="Delete" aria-label="Delete" color="error" onClick={() => setDeleteOpen(true)}>
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Stack>

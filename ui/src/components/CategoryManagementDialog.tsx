@@ -101,16 +101,16 @@ export function CategoryManagementDialog({ open, onClose }: CategoryManagementDi
               key={cat.id}
               secondaryAction={
                 <Stack direction="row" spacing={0.5}>
-                  <IconButton size="small" onClick={() => moveUp(i)} disabled={i === 0}>
+                  <IconButton size="small" onClick={() => moveUp(i)} disabled={i === 0} aria-label="Move up">
                     <ArrowUpwardIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => moveDown(i)} disabled={i === sorted.length - 1}>
+                  <IconButton size="small" onClick={() => moveDown(i)} disabled={i === sorted.length - 1} aria-label="Move down">
                     <ArrowDownwardIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => startEdit(cat)}>
+                  <IconButton size="small" onClick={() => startEdit(cat)} aria-label="Edit">
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(cat.id)}>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(cat.id)} aria-label="Delete">
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Stack>

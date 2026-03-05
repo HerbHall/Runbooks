@@ -154,7 +154,7 @@ export function GlobalVariablesDialog({ open, onClose }: GlobalVariablesDialogPr
                             <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                               {revealedSecrets.has(c.id) ? c.value : "•••••••"}
                             </Typography>
-                            <IconButton size="small" onClick={() => toggleReveal(c.id)}>
+                            <IconButton size="small" onClick={() => toggleReveal(c.id)} aria-label={revealedSecrets.has(c.id) ? "Hide secret" : "Reveal secret"}>
                               {revealedSecrets.has(c.id) ? (
                                 <VisibilityOffIcon sx={{ fontSize: "1rem" }} />
                               ) : (
@@ -188,12 +188,12 @@ export function GlobalVariablesDialog({ open, onClose }: GlobalVariablesDialogPr
                         ) : (
                           <>
                             <Tooltip title="Edit">
-                              <IconButton size="small" onClick={() => handleEdit(c.id)}>
+                              <IconButton size="small" onClick={() => handleEdit(c.id)} aria-label="Edit">
                                 <EditIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete">
-                              <IconButton size="small" onClick={() => setDeleteConfirm(c.id)}>
+                              <IconButton size="small" onClick={() => setDeleteConfirm(c.id)} aria-label="Delete">
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
