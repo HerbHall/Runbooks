@@ -9,15 +9,16 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  attemptCount: number;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, attemptCount: 0 };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
@@ -25,8 +26,18 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  componentDidUpdate(_prevProps: Props, prevState: State): void {
+    if (prevState.hasError && !this.state.hasError) {
+      this.setState({ attemptCount: 0 });
+    }
+  }
+
   handleReset = (): void => {
-    this.setState({ hasError: false, error: null });
+    this.setState((prev) => ({
+      hasError: false,
+      error: null,
+      attemptCount: prev.attemptCount + 1,
+    }));
   };
 
   render(): ReactNode {
@@ -76,19 +87,46 @@ export class ErrorBoundary extends Component<Props, State> {
             >
               {this.state.error?.message ?? "An unexpected error occurred."}
             </Box>
-            <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-              <Button variant="contained" onClick={this.handleReset}>
-                Try Again
-              </Button>
-              <Button
-                variant="outlined"
-                href="https://github.com/HerbHall/Runbooks/issues/new?template=bug_report.yml"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Report Bug
-              </Button>
-            </Box>
+            {this.state.attemptCount >= 3 ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Unable to recover. Try clearing your data or refreshing the page.
+                </Typography>
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      localStorage.clear();
+                      window.location.reload();
+                    }}
+                  >
+                    Clear Data &amp; Reload
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    href="https://github.com/HerbHall/Runbooks/issues/new?template=bug_report.yml"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Report Bug
+                  </Button>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+                <Button variant="contained" onClick={this.handleReset}>
+                  Try Again
+                </Button>
+                <Button
+                  variant="outlined"
+                  href="https://github.com/HerbHall/Runbooks/issues/new?template=bug_report.yml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Report Bug
+                </Button>
+              </Box>
+            )}
           </Paper>
         </Box>
       );
