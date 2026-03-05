@@ -41,7 +41,7 @@ const getLayoutSx = (mode: LayoutMode, compact: boolean) => {
     return { display: "flex", flexDirection: "column" as const, gap, alignContent: "start" };
   }
   return {
-    columnWidth: "340px",
+    columnWidth: "300px",
     columnGap: gap,
     "& > *": {
       breakInside: "avoid",
@@ -466,7 +466,7 @@ export function RunbookList() {
           </Typography>
         </Box>
       ) : groups ? (
-        <Box sx={{ flex: 1, overflow: "auto" }}>
+        <Box sx={{ flex: 1, overflow: "auto", pr: 0.5 }}>
           <Stack spacing={0.75}>
             {groups.map((group) => (
               <Box key={group.tag}>
@@ -509,7 +509,7 @@ export function RunbookList() {
           </Stack>
         </Box>
       ) : (
-        <Box sx={{ flex: 1, overflow: "auto" }}>
+        <Box sx={{ flex: 1, overflow: "auto", pr: 0.5 }}>
           {pinSorted.pinned.length > 0 && (
             <>
               <Divider textAlign="left" sx={{ mb: 0.75 }}>

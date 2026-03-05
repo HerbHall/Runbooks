@@ -53,6 +53,17 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
     [runbook.commands, values],
   );
 
+  /** Variables that have no value and no default — must be filled before running */
+  const missingRequired = useMemo(
+    () => variables.filter((v) => {
+      const constant = getConstant(v.name);
+      if (constant) return false; // globals are always filled
+      const val = values[v.name] ?? "";
+      return val === "" && v.defaultValue === "";
+    }),
+    [variables, values, getConstant],
+  );
+
   const handleChange = useCallback((name: string, value: string) => {
     setValues((prev) => ({ ...prev, [name]: value }));
   }, []);
@@ -159,6 +170,7 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
                 }
 
                 if (suggestions.length > 0) {
+                  const isEmpty = (values[v.name] ?? "") === "" && v.defaultValue === "";
                   return (
                     <Autocomplete
                       key={v.name}
@@ -172,23 +184,51 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
                           label={v.name}
                           size="small"
                           placeholder={v.defaultValue || undefined}
+                          error={isEmpty}
+                          helperText={isEmpty ? "Required" : undefined}
                         />
                       )}
                     />
                   );
                 }
 
-                return (
-                  <TextField
-                    key={v.name}
-                    label={v.name}
-                    value={values[v.name] ?? ""}
-                    onChange={(e) => handleChange(v.name, e.target.value)}
-                    size="small"
-                    fullWidth
-                    placeholder={v.defaultValue || undefined}
-                  />
-                );
+                if (resourceType && suggestions.length === 0) {
+                  const isEmpty = (values[v.name] ?? "") === "" && v.defaultValue === "";
+                  return (
+                    <TextField
+                      key={v.name}
+                      label={v.name}
+                      value={values[v.name] ?? ""}
+                      onChange={(e) => handleChange(v.name, e.target.value)}
+                      size="small"
+                      fullWidth
+                      placeholder={v.defaultValue || undefined}
+                      error={isEmpty}
+                      helperText={
+                        isEmpty
+                          ? `No ${resourceType}s available — start a ${resourceType} first`
+                          : undefined
+                      }
+                    />
+                  );
+                }
+
+                {
+                  const isEmpty = (values[v.name] ?? "") === "" && v.defaultValue === "";
+                  return (
+                    <TextField
+                      key={v.name}
+                      label={v.name}
+                      value={values[v.name] ?? ""}
+                      onChange={(e) => handleChange(v.name, e.target.value)}
+                      size="small"
+                      fullWidth
+                      placeholder={v.defaultValue || undefined}
+                      error={isEmpty}
+                      helperText={isEmpty ? "Required" : undefined}
+                    />
+                  );
+                }
               })}
             </Stack>
           </Box>
@@ -200,7 +240,7 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
         </Button>
         <Box sx={{ flex: 1 }} />
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleRun}>
+        <Button variant="contained" onClick={handleRun} disabled={missingRequired.length > 0}>
           Run
         </Button>
       </DialogActions>

@@ -143,7 +143,7 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
                 duration: Date.now() - startTime,
               });
             },
-            splitOutputLines: true,
+            splitOutputLines: false,
           },
         });
 
@@ -409,8 +409,14 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
   const navigationActions = getNavigationActions(commands);
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{ sx: { maxHeight: "85vh", display: "flex", flexDirection: "column" } }}
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, py: 1.5, flexShrink: 0 }}>
         Running: {runbook.name}
         {status === "running" && <CircularProgress size={20} />}
         {status === "running" && (
@@ -419,14 +425,22 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
           </Typography>
         )}
       </DialogTitle>
-      <DialogContent>
-        <Stack spacing={2}>
+      <DialogContent sx={{ overflow: "auto", py: 1 }}>
+        <Stack spacing={1.5}>
           {commands.map((cmd, i) => {
             const isCurrentCommand = i === currentIndex && status === "running";
 
             return (
               <Box key={i}>
-                <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: "monospace",
+                    fontWeight: 600,
+                    fontSize: "0.8rem",
+                    color: "text.secondary",
+                  }}
+                >
                   $ {cmd}
                   {isCurrentCommand && " (running...)"}
                 </Typography>
@@ -435,17 +449,17 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
                 {isCurrentCommand && streamOutput !== "" && (
                   <Box
                     ref={outputContainerRef}
+                    component="pre"
                     sx={{
                       bgcolor: "action.hover",
                       color: "text.primary",
                       p: 1.5,
                       borderRadius: 1,
-                      fontSize: "0.8rem",
+                      fontSize: "0.75rem",
                       fontFamily: "monospace",
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-all",
+                      whiteSpace: "pre",
                       overflow: "auto",
-                      maxHeight: 300,
+                      maxHeight: "50vh",
                       m: 0,
                       mt: 0.5,
                     }}
@@ -463,9 +477,10 @@ export function RunbookExecutionDialog({ open, onClose, runbook }: RunbookExecut
                       color: results[i].exitCode === 0 ? "text.primary" : "error.contrastText",
                       p: 1.5,
                       borderRadius: 1,
-                      fontSize: "0.8rem",
+                      fontSize: "0.75rem",
+                      fontFamily: "monospace",
+                      whiteSpace: "pre",
                       overflow: "auto",
-                      maxHeight: 200,
                       m: 0,
                       mt: 0.5,
                     }}

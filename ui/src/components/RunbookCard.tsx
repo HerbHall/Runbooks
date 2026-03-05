@@ -43,9 +43,10 @@ export const RunbookCard = memo(function RunbookCard({ runbook, category, collap
 
   return (
     <>
-      <Card variant="outlined">
-        <CardContent sx={{ p: compact ? 0.75 : 1, "&:last-child": { pb: compact ? 0.75 : 1 } }}>
-          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: collapsed ? 0 : 0.5 }}>
+      <Card variant="outlined" sx={{ overflow: "hidden" }}>
+        <CardContent sx={{ p: compact ? 0.75 : 1, "&:last-child": { pb: compact ? 0.75 : 1 }, minWidth: 0 }}>
+          {/* Row 1: collapse + title + action buttons */}
+          <Stack direction="row" alignItems="center" spacing={0.5}>
             {onToggleCollapse && (
               <IconButton size="small" onClick={onToggleCollapse} title={collapsed ? "Expand" : "Collapse"}>
                 {collapsed ? (
@@ -55,39 +56,57 @@ export const RunbookCard = memo(function RunbookCard({ runbook, category, collap
                 )}
               </IconButton>
             )}
-            <Typography variant={compact ? "body1" : "subtitle1"} component="div" sx={{ flexShrink: 0, fontWeight: 600, lineHeight: 1.3 }}>
+            <Typography
+              variant={compact ? "body1" : "subtitle1"}
+              component="div"
+              sx={{
+                fontWeight: 600,
+                lineHeight: 1.3,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
               {runbook.name}
             </Typography>
-            {category && <CategoryBadge category={category} />}
-            {runbook.tags.map((tag) => (
-              <Chip key={tag} label={tag} size="small" />
-            ))}
-            <Box sx={{ flex: 1 }} />
-            <IconButton
-              size="small"
-              title={runbook.pinned ? "Unpin" : "Pin"}
-              onClick={() => togglePin(runbook.id)}
-              color={runbook.pinned ? "warning" : "default"}
-            >
-              {runbook.pinned ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
-            </IconButton>
-            <IconButton size="small" color="primary" title="Run" onClick={() => setExecOpen(true)}>
-              <PlayArrowIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              title="Copy commands"
-              onClick={() => navigator.clipboard.writeText(runbook.commands.join("\n"))}
-            >
-              <ContentCopyIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" title="Edit" onClick={() => setEditOpen(true)}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" title="Delete" color="error" onClick={() => setDeleteOpen(true)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
+            <Stack direction="row" spacing={0} sx={{ flexShrink: 0 }}>
+              <IconButton
+                size="small"
+                title={runbook.pinned ? "Unpin" : "Pin"}
+                onClick={() => togglePin(runbook.id)}
+                color={runbook.pinned ? "warning" : "default"}
+              >
+                {runbook.pinned ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+              </IconButton>
+              <IconButton size="small" color="primary" title="Run" onClick={() => setExecOpen(true)}>
+                <PlayArrowIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                title="Copy commands"
+                onClick={() => navigator.clipboard.writeText(runbook.commands.join("\n"))}
+              >
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" title="Edit" onClick={() => setEditOpen(true)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" title="Delete" color="error" onClick={() => setDeleteOpen(true)}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Stack>
           </Stack>
+          {/* Row 2: category + tags */}
+          {(category || runbook.tags.length > 0) && (
+            <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", rowGap: 0.5, mb: collapsed ? 0 : 0.5 }}>
+              {category && <CategoryBadge category={category} />}
+              {runbook.tags.map((tag) => (
+                <Chip key={tag} label={tag} size="small" />
+              ))}
+            </Stack>
+          )}
           <Collapse in={!collapsed}>
             <>
               {runbook.description && (
