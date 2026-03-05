@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2](https://github.com/HerbHall/Runbooks/compare/v0.2.1...v0.2.2) (2026-03-05)
+
+
+### Bug Fixes
+
+* add aria-label to all IconButtons for screen reader accessibility ([#162](https://github.com/HerbHall/Runbooks/issues/162)) ([ebde9de](https://github.com/HerbHall/Runbooks/commit/ebde9de81cff04ac30c4773f8785c46bfb4de44d)), closes [#153](https://github.com/HerbHall/Runbooks/issues/153)
+* error handling for localStorage quota, clipboard, and ErrorBoundary retry ([#160](https://github.com/HerbHall/Runbooks/issues/160)) ([0d8a7ec](https://github.com/HerbHall/Runbooks/commit/0d8a7ec75dc9c2807828ae6bbf4250e22665bc39))
+* improve card layout, execution output, and parameter validation ([540779b](https://github.com/HerbHall/Runbooks/commit/540779b21e41295e6fa11c7f9daf96d976e34d0b))
+* sync version across release-please, package.json, and Makefile ([#155](https://github.com/HerbHall/Runbooks/issues/155)) ([f9529d7](https://github.com/HerbHall/Runbooks/commit/f9529d718c85a398b815c0477d30962e79e3cb28)), closes [#147](https://github.com/HerbHall/Runbooks/issues/147)
+* treat empty variable values as intentional and add quote-aware command parsing ([#157](https://github.com/HerbHall/Runbooks/issues/157)) ([1349a81](https://github.com/HerbHall/Runbooks/commit/1349a81988b0eaad666dbdfed429ce3af32be0c7)), closes [#149](https://github.com/HerbHall/Runbooks/issues/149)
+* update CI action versions, fix icon label, update alpine base image, enforce test gate ([#154](https://github.com/HerbHall/Runbooks/issues/154)) ([e2a8f4b](https://github.com/HerbHall/Runbooks/commit/e2a8f4bbd84dc0921478d2ca337035561379b11d))
+* update delete dialog copy for soft-delete ([#158](https://github.com/HerbHall/Runbooks/issues/158)) ([7f933db](https://github.com/HerbHall/Runbooks/commit/7f933dbc259a49f0263f46bcb8f1489bc4137ace))
+* UX improvements for trash confirmation, Ctrl+N guard, and collapse scope ([#161](https://github.com/HerbHall/Runbooks/issues/161)) ([dc8bb65](https://github.com/HerbHall/Runbooks/commit/dc8bb650ac855b8d627e467aca250efab366fc32)), closes [#151](https://github.com/HerbHall/Runbooks/issues/151)
+
 ## [0.2.1](https://github.com/HerbHall/Runbooks/compare/v0.2.0...v0.2.1) (2026-03-04)
 
 
