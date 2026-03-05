@@ -1,0 +1,67 @@
+# Re-trigger CI on Release PRs
+#
+# When release-please updates its PR branch, the new commit sometimes
+# doesn't trigger CI (GitHub Actions race condition). This workflow
+# detects release-please PRs with stale or missing checks and
+# closes/reopens them to force a CI re-trigger.
+#
+# Runs after Release Please completes (which is when the branch updates).
+
+name: Re-trigger CI
+
+on:
+  workflow_run:
+    workflows: ["Release Please"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  retrigger:
+    name: Re-trigger Stale Release PR
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Find and re-trigger release PR
+        run: |
+          # Find open release-please PR
+          PR_NUMBER=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --head "release-please--branches--main" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No open release-please PR found, skipping"
+            exit 0
+          fi
+
+          echo "Found release PR #$PR_NUMBER"
+
+          # Get the PR's head SHA
+          PR_SHA=$(gh pr view "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --json headRefOid \
+            --jq '.headRefOid')
+
+          # Check if CI has run for this exact SHA
+          CI_STATUS=$(gh pr view "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --json statusCheckRollup \
+            --jq '[.statusCheckRollup[] | select(.name == "Build")] | length')
+
+          if [ "$CI_STATUS" -gt 0 ]; then
+            echo "CI already reported for PR #$PR_NUMBER at $PR_SHA, skipping"
+            exit 0
+          fi
+
+          echo "No CI checks found for PR #$PR_NUMBER at $PR_SHA, re-triggering..."
+          gh pr close "$PR_NUMBER" --repo "${{ github.repository }}"
+          sleep 2
+          gh pr reopen "$PR_NUMBER" --repo "${{ github.repository }}"
+          echo "Re-triggered CI for PR #$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
