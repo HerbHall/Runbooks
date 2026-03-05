@@ -97,6 +97,11 @@ export function RunbookList() {
   const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
   const [smartFilter, setSmartFilter] = useState<SmartFilter>("none");
 
+  // Reset smart filter when example visibility changes to prevent empty results with no explanation
+  useEffect(() => {
+    setSmartFilter("none");
+  }, [showExamples]);
+
   const toggleSmartFilter = (filter: SmartFilter) => {
     setSmartFilter((prev) => (prev === filter ? "none" : filter));
   };
@@ -311,9 +316,9 @@ export function RunbookList() {
   const expandAllCards = useCallback(() => setCollapsedCards({}), []);
   const collapseAllCards = useCallback(() => {
     setCollapsedCards(
-      Object.fromEntries(pinSorted.all.map((r) => [r.id, true])),
+      Object.fromEntries(runbooks.map((r) => [r.id, true])),
     );
-  }, [pinSorted.all]);
+  }, [runbooks]);
 
   const totalInGroup = (g: PrimaryGroup) => g.runbooks.length;
 
@@ -460,9 +465,11 @@ export function RunbookList() {
           }}
         >
           <Typography color="text.secondary">
-            {smartFilter !== "none"
-              ? "No runbooks match this filter."
-              : "No runbooks match your search."}
+            {smartFilter !== "none" && searchQuery.trim()
+              ? "No runbooks match your filter and search."
+              : smartFilter !== "none"
+                ? "No runbooks match this filter."
+                : "No runbooks match your search."}
           </Typography>
         </Box>
       ) : groups ? (
