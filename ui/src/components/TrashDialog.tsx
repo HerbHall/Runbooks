@@ -80,12 +80,12 @@ export function TrashDialog({ open, onClose }: TrashDialogProps) {
                   />
                   <ListItemSecondaryAction>
                     <Tooltip title="Restore">
-                      <IconButton edge="end" onClick={() => restoreRunbook(runbook.id)} sx={{ mr: 0.5 }}>
+                      <IconButton edge="end" onClick={() => restoreRunbook(runbook.id)} aria-label="Restore" sx={{ mr: 0.5 }}>
                         <RestoreIcon />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete permanently">
-                      <IconButton edge="end" onClick={() => permanentDeleteRunbook(runbook.id)}>
+                      <IconButton edge="end" onClick={() => permanentDeleteRunbook(runbook.id)} aria-label="Delete permanently">
                         <DeleteForeverIcon color="error" />
                       </IconButton>
                     </Tooltip>

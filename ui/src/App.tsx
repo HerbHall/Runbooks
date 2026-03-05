@@ -126,14 +126,14 @@ export default function App() {
             Import
           </Button>
           <Tooltip title="Trash">
-            <IconButton size="small" onClick={() => setTrashOpen(true)}>
+            <IconButton size="small" onClick={() => setTrashOpen(true)} aria-label="Trash">
               <Badge badgeContent={trashedRunbooks.length} color="error" max={99}>
                 <DeleteOutlineIcon />
               </Badge>
             </IconButton>
           </Tooltip>
           <Tooltip title="Help & Feedback">
-            <IconButton size="small" onClick={(e) => setHelpAnchor(e.currentTarget)}>
+            <IconButton size="small" onClick={(e) => setHelpAnchor(e.currentTarget)} aria-label="Help & Feedback">
               <HelpOutlineIcon />
             </IconButton>
           </Tooltip>

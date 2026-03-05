@@ -389,22 +389,22 @@ export function RunbookList() {
           <MenuItem value="last-run-desc">Recently Executed</MenuItem>
         </Select>
         <Tooltip title={layoutMode === "grid" ? "Switch to list view" : "Switch to grid view"} placement="bottom">
-          <IconButton size="small" onClick={handleLayoutToggle}>
+          <IconButton size="small" onClick={handleLayoutToggle} aria-label={layoutMode === "grid" ? "Switch to list view" : "Switch to grid view"}>
             {layoutMode === "grid" ? <ViewListIcon fontSize="small" /> : <GridViewIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
         <Tooltip title={compact ? "Normal density" : "Compact density"} placement="bottom">
-          <IconButton size="small" onClick={handleCompactToggle} color={compact ? "primary" : "default"}>
+          <IconButton size="small" onClick={handleCompactToggle} color={compact ? "primary" : "default"} aria-label={compact ? "Normal density" : "Compact density"}>
             <DensitySmallIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title="Expand all cards" placement="bottom">
-          <IconButton size="small" onClick={expandAllCards}>
+          <IconButton size="small" onClick={expandAllCards} aria-label="Expand all cards">
             <UnfoldMoreIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title="Collapse all cards" placement="bottom">
-          <IconButton size="small" onClick={collapseAllCards}>
+          <IconButton size="small" onClick={collapseAllCards} aria-label="Collapse all cards">
             <UnfoldLessIcon fontSize="small" />
           </IconButton>
         </Tooltip>
