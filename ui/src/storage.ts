@@ -119,12 +119,17 @@ export function loadRunbooks(): Runbook[] {
     }
     return purged;
   } catch {
+    localStorage.removeItem(STORAGE_KEY);
     return DEFAULT_RUNBOOKS;
   }
 }
 
 export function saveRunbooks(runbooks: Runbook[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(runbooks));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(runbooks));
+  } catch (e) {
+    console.error("Failed to save runbooks (storage quota exceeded?):", e);
+  }
 }
 
 export function loadCategories(): Category[] {
@@ -133,12 +138,17 @@ export function loadCategories(): Category[] {
   try {
     return JSON.parse(raw) as Category[];
   } catch {
+    localStorage.removeItem(CATEGORIES_KEY);
     return DEFAULT_CATEGORIES;
   }
 }
 
 export function saveCategories(categories: Category[]): void {
-  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  try {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  } catch (e) {
+    console.error("Failed to save categories (storage quota exceeded?):", e);
+  }
 }
 
 export function loadGlobalVariables(): GlobalVariable[] {
@@ -147,12 +157,17 @@ export function loadGlobalVariables(): GlobalVariable[] {
   try {
     return JSON.parse(raw) as GlobalVariable[];
   } catch {
+    localStorage.removeItem(GLOBALS_KEY);
     return [];
   }
 }
 
 export function saveGlobalVariables(globals: GlobalVariable[]): void {
-  localStorage.setItem(GLOBALS_KEY, JSON.stringify(globals));
+  try {
+    localStorage.setItem(GLOBALS_KEY, JSON.stringify(globals));
+  } catch (e) {
+    console.error("Failed to save global variables (storage quota exceeded?):", e);
+  }
 }
 
 export function exportRunbooks(runbooks: Runbook[], categories?: Category[], globals?: GlobalVariable[]): void {

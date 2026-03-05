@@ -73,7 +73,9 @@ export function ParameterInputDialog({ open, onClose, onRun, runbook }: Paramete
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(preview.join("\n"));
+    navigator.clipboard.writeText(preview.join("\n")).catch((err) => {
+      console.error("Failed to copy to clipboard:", err);
+    });
   };
 
   return (

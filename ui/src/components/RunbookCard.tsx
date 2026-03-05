@@ -86,7 +86,11 @@ export const RunbookCard = memo(function RunbookCard({ runbook, category, collap
               <IconButton
                 size="small"
                 title="Copy commands"
-                onClick={() => navigator.clipboard.writeText(runbook.commands.join("\n"))}
+                onClick={() => {
+                  navigator.clipboard.writeText(runbook.commands.join("\n")).catch((err) => {
+                    console.error("Failed to copy to clipboard:", err);
+                  });
+                }}
               >
                 <ContentCopyIcon fontSize="small" />
               </IconButton>
