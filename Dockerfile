@@ -1,6 +1,6 @@
 # Build the React UI
 FROM --platform=$BUILDPLATFORM node:22-alpine AS ui-builder
-ARG VERSION=0.2.3 # x-release-please-version
+ARG VERSION=0.2.4 # x-release-please-version
 WORKDIR /app
 COPY ui/package.json ui/package-lock.json* ./
 RUN npm ci
@@ -10,7 +10,7 @@ RUN npm version "$VERSION" --no-git-tag-version --allow-same-version && npm run 
 # Final extension image
 FROM alpine:3.21
 
-ARG VERSION=0.2.3 # x-release-please-version
+ARG VERSION=0.2.4 # x-release-please-version
 
 LABEL org.opencontainers.image.title="Runbooks" \
     org.opencontainers.image.description="Saved command scripts for Docker Desktop" \
