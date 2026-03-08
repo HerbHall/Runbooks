@@ -15,6 +15,18 @@
 - **Status:** v0.2.0, tested in Docker Desktop, pending marketplace submission
 - **Workspace:** `D:\DevSpace\runbooks.code-workspace` (DevSpace root, per convention)
 
+## Session Start (Required)
+
+Before any work in a new session:
+
+1. Read `.samverk/status.md` -- current phase, in-flight issues, last session summary
+2. Samverk MCP not yet configured for this project -- skip step 2
+3. Check open issues if the task involves issue triage or project direction
+4. Proceed without asking the user to explain project state -- the repo has it
+
+**Rule**: Never ask the user "what's the current state?" or "where did we leave off?"
+Read the repo first. Ask only if something is genuinely ambiguous after reading.
+
 ## Architecture
 
 **Frontend-only Docker Desktop Extension.** No backend service.
