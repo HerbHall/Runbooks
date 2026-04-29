@@ -8,6 +8,27 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      # Pinned by @docker/docker-mui-theme peer range (>=5.x.x <=6.x.x).
+      # Revisit when Docker publishes a theme supporting MUI v7+.
+      - dependency-name: "@mui/material"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@mui/icons-material"
+        update-types: ["version-update:semver-major"]
+      # Pinned by @docker/docker-mui-theme peer range (react ^17 || ^18).
+      # Revisit when Docker publishes a theme supporting React 19+.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      # Pinned by typescript-eslint 8.x peer range (>=4.8.4 <6.0.0).
+      # Revisit once typescript-eslint v9 ships with TypeScript 6 support.
+      - dependency-name: "typescript"
+        versions: ["6.x"]
 
   - package-ecosystem: github-actions
     directory: /
