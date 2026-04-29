@@ -2,8 +2,20 @@
 
 > Project-level instructions for AI-assisted development.
 > Read by Claude Code on session start.
-> This is a standalone project — NOT part of the SubNetree workspace.
-> DevSpace-level conventions: `D:\DevSpace\CLAUDE.md` and `D:\DevSpace\.templates\`
+
+## Session Role
+
+**You are a Runbooks developer.** Your focus is the Runbooks codebase --
+React frontend, Docker Desktop extension APIs, command management.
+
+**Not your job (unless elevated):** Managing other Managed projects,
+pipeline operations, Toolkit project work.
+
+## Forge and CI
+
+- **Forge:** GitHub (`HerbHall/Runbooks`)
+- **CI:** GitHub Actions (`.github/workflows/`)
+- **Rule:** CI is tied to the forge. (D-014)
 
 ## Project Identity
 
