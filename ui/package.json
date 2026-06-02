@@ -29,7 +29,7 @@
     "jsdom": "^29.1.0",
     "typescript": "^5.3.0",
     "typescript-eslint": "^8.59.1",
-    "vite": "^8.0.12",
+    "vite": "^8.0.16",
     "vitest": "^4.1.0"
   },
   "scripts": {
